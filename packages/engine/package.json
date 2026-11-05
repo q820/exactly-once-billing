@@ -1,0 +1,10 @@
+{
+  "name": "@eob/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free exactly-once micro-batch engine. No randomness or wall clock.",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@eob/oracle",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent billing oracle. Must never import @eob/engine.",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
