@@ -12,3 +12,4 @@ export * from "./sim/prng.js";
 export * from "./sim/queue.js";
 export * from "./sim/workload.js";
 export * from "./sim/simulation.js";
+export * from "./safeguards.js";

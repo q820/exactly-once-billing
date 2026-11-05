@@ -2,7 +2,8 @@ import { compareBatchId, formatBatchId } from "./batchId.js";
 import { InvariantViolation } from "./invariants.js";
 import { CrashSignal, noCrashes, type CrashInjector, type CrashPoint } from "./crash.js";
 import type { BatchLog, Clock, DedupStore, Stores } from "./stores/types.js";
-import { halfHour, isPastRetention } from "./time.js";
+import { ALL_SAFEGUARDS, type Safeguards } from "./safeguards.js";
+import { halfHour, isPastRetention, RETENTION_MS } from "./time.js";
 import type { BatchId, BatchPlan, Commit, DedupEntry, LogRecord, Micros, SinkKey } from "./types.js";
 
 /**
@@ -30,6 +31,13 @@ export interface WorkerOptions {
    * exists for the `processingClock` break-it toggle.
    */
   readonly clock?: Clock;
+  /** All on by default. Each break-it toggle turns one off. */
+  readonly safeguards?: Partial<Safeguards>;
+  /**
+   * Seeded randomness. A correct worker never uses it; it exists for the
+   * `nondeterministicBatches` break-it toggle.
+   */
+  readonly random?: () => number;
 }
 
 export type StepResult =
@@ -37,7 +45,14 @@ export type StepResult =
   | { readonly kind: "idle" }
   | { readonly kind: "planned"; readonly plan: BatchPlan }
   | { readonly kind: "read"; readonly count: number }
-  | { readonly kind: "filtered"; readonly kept: number; readonly duplicates: number; readonly dropped: number }
+  | {
+      readonly kind: "filtered";
+      readonly kept: number;
+      readonly duplicates: number;
+      readonly dropped: number;
+      /** The records behind the counts, for inspectors. Not part of the trace. */
+      readonly decisions: FilterResult;
+    }
   | { readonly kind: "dedupWritten"; readonly written: number }
   | { readonly kind: "aggregated"; readonly keys: number }
   | { readonly kind: "sinkWritten"; readonly applied: number; readonly rejected: number }
@@ -54,6 +69,15 @@ export interface WorkerSnapshot {
 export interface Delta {
   readonly key: SinkKey;
   readonly delta: Micros;
+}
+
+export interface FilterOptions {
+  /** Safeguard `dedupStore`. Off: no dedup at all, not even within the batch. */
+  readonly useDedup?: boolean;
+  /** Safeguard `dedupChecksBatchId`. Off: any existing entry counts as a duplicate. */
+  readonly checkBatchId?: boolean;
+  /** Set only when safeguard `recordTimeDecisions` is off: retention measured from this processing time. */
+  readonly processingNow?: number;
 }
 
 export interface FilterResult {
@@ -75,20 +99,31 @@ export function filterBatch(
   records: readonly LogRecord[],
   id: BatchId,
   dedupGet: (messageId: string) => DedupEntry | undefined,
+  opts: FilterOptions = {},
 ): FilterResult {
+  const useDedup = opts.useDedup ?? true;
+  const checkBatchId = opts.checkBatchId ?? true;
+  const pastRetention =
+    opts.processingNow === undefined
+      ? isPastRetention
+      : (rec: LogRecord) => opts.processingNow! - rec.sentAt > RETENTION_MS; // break-it: processing clock
   const kept: LogRecord[] = [];
   const duplicates: LogRecord[] = [];
   const dropped: LogRecord[] = [];
   const keptInBatch = new Set<string>();
   for (const rec of records) {
-    if (isPastRetention(rec)) {
+    if (pastRetention(rec)) {
       dropped.push(rec);
+      continue;
+    }
+    if (!useDedup) {
+      kept.push(rec); // break-it: at-least-once only
       continue;
     }
     const entry = dedupGet(rec.messageId);
     if (entry) {
       const c = compareBatchId(entry.id, id);
-      if (c < 0) {
+      if (c < 0 || !checkBatchId) {
         // Kept by an earlier batch: a true duplicate.
         duplicates.push(rec);
         continue;
@@ -144,6 +179,9 @@ export class Worker {
   private readonly maxBatch: number;
   private readonly crash: CrashInjector;
   private readonly afterFilter: readonly Phase[];
+  private readonly sg: Safeguards;
+  private readonly clock: Clock | undefined;
+  private readonly random: (() => number) | undefined;
 
   // Memory only: discarded with the Worker on a crash.
   private phase: Phase = "recover";
@@ -162,6 +200,11 @@ export class Worker {
     this.maxBatch = opts.maxBatch;
     this.crash = opts.crash ?? noCrashes;
     this.afterFilter = AFTER_FILTER[opts.stepOrder ?? "dedupThenSink"];
+    this.sg = { ...ALL_SAFEGUARDS, ...opts.safeguards };
+    this.clock = opts.clock;
+    this.random = opts.random;
+    if (!this.sg.recordTimeDecisions && !this.clock) throw new Error("processingClock toggle needs a clock");
+    if (!this.sg.deterministicBatches && !this.random) throw new Error("nondeterministicBatches toggle needs randomness");
   }
 
   snapshot(): WorkerSnapshot {
@@ -202,6 +245,18 @@ export class Worker {
     const commit = this.log.lastCommit();
     if (plan && (!commit || compareBatchId(plan.id, commit.id) > 0)) {
       this.plan = plan; // never re-stamped with the new epoch
+      if (!this.sg.replayKeepsBatchId) {
+        // break-it: the replay takes the new epoch
+        this.plan = { ...this.plan, id: { epoch, idx: plan.id.idx } };
+        this.log.writePlan(this.plan);
+      }
+      if (!this.sg.deterministicBatches) {
+        // break-it: ignore the planned range; read whatever is available, up to a random size
+        const logEnd = this.stores.source.endOffset(this.partition);
+        const size = 1 + Math.floor(this.random!() * this.maxBatch);
+        this.plan = { ...this.plan, endOffset: Math.min(logEnd, this.plan.startOffset + size - 1) };
+        this.log.writePlan(this.plan);
+      }
       this.isReplay = true;
       this.phase = "read";
       return { kind: "recovered", epoch, replay: plan };
@@ -221,6 +276,7 @@ export class Worker {
       endOffset: Math.min(logEnd, start + this.maxBatch - 1),
     };
     this.log.writePlan(plan);
+    if (!this.sg.commitLast) this.log.commit(plan.id, plan.endOffset); // break-it: commit before processing
     this.plan = plan;
     this.isReplay = false;
     this.phase = "read";
@@ -243,7 +299,11 @@ export class Worker {
   /** Step 3. Drop past-retention, skip duplicates, keep our own earlier attempt. */
   private filter(): StepResult {
     const plan = this.currentPlan();
-    const { kept, duplicates, dropped } = filterBatch(this.records, plan.id, (m) => this.dedup.get(m));
+    const { kept, duplicates, dropped } = filterBatch(this.records, plan.id, (m) => this.dedup.get(m), {
+      useDedup: this.sg.dedupStore,
+      checkBatchId: this.sg.dedupChecksBatchId,
+      ...(this.sg.recordTimeDecisions ? {} : { processingNow: this.clock!.now() }),
+    });
     for (const rec of dropped) {
       this.stores.drops.record({
         partition: rec.partition,
@@ -255,7 +315,13 @@ export class Worker {
     }
     this.kept = kept;
     this.phase = this.afterFilter[0]!;
-    return { kind: "filtered", kept: kept.length, duplicates: duplicates.length, dropped: dropped.length };
+    return {
+      kind: "filtered",
+      kept: kept.length,
+      duplicates: duplicates.length,
+      dropped: dropped.length,
+      decisions: { kept, duplicates, dropped },
+    };
   }
 
   /** Step 4. putIfAbsent per kept item. C2a halfway, C2 after. */
@@ -265,6 +331,7 @@ export class Worker {
     let written = 0;
     for (const [i, rec] of this.kept.entries()) {
       if (i === half) this.crashPoint("C2a");
+      if (!this.sg.dedupStore) continue; // break-it: no dedup writes
       if (this.dedup.putIfAbsent(rec.messageId, { id, seenAt: rec.appendedAt })) written++;
     }
     this.advance("writeDedup");
@@ -287,7 +354,10 @@ export class Worker {
     let rejected = 0;
     for (const [i, { key, delta }] of this.deltas.entries()) {
       if (i === half) this.crashPoint("C3a");
-      if (this.stores.ledger.casApply(key, delta, id) === "applied") applied++;
+      if (!this.sg.casSink) {
+        this.stores.ledger.blindAdd(key, delta, id); // break-it: no CAS
+        applied++;
+      } else if (this.stores.ledger.casApply(key, delta, id) === "applied") applied++;
       else rejected++;
     }
     this.advance("sink");

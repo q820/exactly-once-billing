@@ -71,7 +71,7 @@ export interface SimOptions {
 }
 
 /** Worker options the sim doesn't set itself (e.g. safeguards). */
-export type WorkerExtras = Omit<Partial<WorkerOptions>, "partition" | "stores" | "maxBatch" | "crash" | "stepOrder" | "clock">;
+export type WorkerExtras = Pick<WorkerOptions, "safeguards">;
 
 export type SimEvent =
   | { readonly t: number; readonly type: "produce"; readonly appended: number }
@@ -137,6 +137,7 @@ export class Simulation {
   private readonly queue = new EventQueue<QueueItem>();
   private readonly lanes: Lane[];
   private readonly platformRng: Prng;
+  private readonly workerRng: Prng;
   private readonly crash: CrashInjector;
   private readonly opts: SimOptions;
   private cursor = 0;
@@ -148,6 +149,7 @@ export class Simulation {
     this.stores = createMemoryStores(config.partitions);
     this.writeStores = opts.checkInvariants === false ? this.stores : withInvariants(this.stores);
     this.platformRng = mulberry32(deriveSeed(config.seed, "platform"));
+    this.workerRng = mulberry32(deriveSeed(config.seed, "worker"));
     const crashRng = mulberry32(deriveSeed(config.seed, "crash"));
     const injectors: CrashInjector[] = [];
     if (opts.crashProbability) injectors.push(randomCrashes(crashRng.next, opts.crashProbability));
@@ -230,6 +232,7 @@ export class Simulation {
       crash: this.crash,
       stepOrder: this.config.stepOrder,
       clock: this.clock,
+      random: this.workerRng.next,
     });
   }
 
@@ -292,6 +295,7 @@ export function formatSimEvent(e: SimEvent): string {
     case "step": {
       const id = e.batchId ? formatBatchId(e.batchId) : "-";
       const { kind, ...rest } = e.result;
+      if ("decisions" in rest) delete (rest as { decisions?: unknown }).decisions;
       return `${e.t} P${e.partition} ${kind} ${id}${e.isReplay ? " replay" : ""} ${JSON.stringify(rest)}`;
     }
   }

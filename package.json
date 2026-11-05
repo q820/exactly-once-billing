@@ -7,7 +7,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "torture": "tsx apps/torture/src/cli.ts"
   },
   "packageManager": "pnpm@10.34.9",
   "engines": {
