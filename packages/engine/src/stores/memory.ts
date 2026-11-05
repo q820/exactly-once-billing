@@ -107,14 +107,28 @@ export class MemoryLedger implements Ledger {
   private readonly map = new Map<string, LedgerRow>();
 
   casApply(key: SinkKey, delta: Micros, id: BatchId): CasResult {
+    const row = this.map.get(sinkKeyString(key));
+    if (row && compareBatchId(row.lastApplied, id) >= 0) return "rejected";
+    this.add(key, delta, id);
+    return "applied";
+  }
+
+  blindAdd(key: SinkKey, delta: Micros, id: BatchId): void {
+    this.add(key, delta, id);
+  }
+
+  get(key: SinkKey): LedgerRow | undefined {
+    return this.map.get(sinkKeyString(key));
+  }
+
+  private add(key: SinkKey, delta: Micros, id: BatchId): void {
     if (!Number.isSafeInteger(delta)) throw new RangeError(`delta must be integer micros, got ${delta}`);
     const k = sinkKeyString(key);
     const row = this.map.get(k);
-    if (row && compareBatchId(row.lastApplied, id) >= 0) return "rejected";
     const totalMicros = (row?.totalMicros ?? 0) + delta;
     if (!Number.isSafeInteger(totalMicros)) throw new RangeError(`row total overflowed: ${k}`);
-    this.map.set(k, Object.freeze({ key: Object.freeze({ ...key }), totalMicros, lastApplied: id }));
-    return "applied";
+    const lastApplied = row && compareBatchId(row.lastApplied, id) > 0 ? row.lastApplied : id;
+    this.map.set(k, Object.freeze({ key: Object.freeze({ ...key }), totalMicros, lastApplied }));
   }
 
   rows(): readonly LedgerRow[] {

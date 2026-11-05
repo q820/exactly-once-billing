@@ -1,6 +1,7 @@
 import { compareBatchId, formatBatchId } from "./batchId.js";
+import { InvariantViolation } from "./invariants.js";
 import { CrashSignal, noCrashes, type CrashInjector, type CrashPoint } from "./crash.js";
-import type { BatchLog, DedupStore, Stores } from "./stores/types.js";
+import type { BatchLog, Clock, DedupStore, Stores } from "./stores/types.js";
 import { halfHour, isPastRetention } from "./time.js";
 import type { BatchId, BatchPlan, Commit, DedupEntry, LogRecord, Micros, SinkKey } from "./types.js";
 
@@ -24,6 +25,11 @@ export interface WorkerOptions {
   readonly crash?: CrashInjector;
   /** Dedup and sink writes are interchangeable; only plan-first and commit-last are load-bearing. */
   readonly stepOrder?: StepOrder;
+  /**
+   * The processing clock. A correct worker never reads it inside a batch; it
+   * exists for the `processingClock` break-it toggle.
+   */
+  readonly clock?: Clock;
 }
 
 export type StepResult =
@@ -88,8 +94,9 @@ export function filterBatch(
         continue;
       }
       if (c > 0) {
-        throw new Error(
-          `I3: dedup entry for ${rec.messageId} ${formatBatchId(entry.id)} is newer than batch ${formatBatchId(id)}`,
+        throw new InvariantViolation(
+          "I3",
+          `dedup entry for ${rec.messageId} ${formatBatchId(entry.id)} is newer than batch ${formatBatchId(id)}`,
         );
       }
       // c === 0: our own earlier attempt at this batch. Keep it (subject to the in-batch check).
@@ -288,10 +295,21 @@ export class Worker {
     return { kind: "sinkWritten", applied, rejected };
   }
 
-  /** Step 7. Commit last. C4 after. */
+  /**
+   * Step 7. Commit last. C4 after.
+   *
+   * Then expire dedup entries against this batch's record-time watermark (its
+   * largest appendedAt), never the processing clock. appendedAt is non-decreasing
+   * in log order, so any later copy of an expired message has
+   * appendedAt - sentAt > 35 days and is dropped as past-retention anyway.
+   * Expiring only after the commit means a replay never sees fewer entries than
+   * its first attempt did.
+   */
   private commit(): StepResult {
     const plan = this.currentPlan();
     this.log.commit(plan.id, plan.endOffset);
+    const watermark = this.records.reduce((m, r) => Math.max(m, r.appendedAt), -Infinity);
+    if (watermark > -Infinity) this.dedup.expire(watermark);
     this.phase = "plan";
     this.crashPoint("C4");
     return { kind: "committed", commit: { id: plan.id, endOffset: plan.endOffset } };

@@ -1,0 +1,14 @@
+{
+  "name": "@eob/torture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runs seeds through the engine and checks the ledger against the independent oracle.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@eob/engine": "workspace:*",
+    "@eob/oracle": "workspace:*"
+  }
+}

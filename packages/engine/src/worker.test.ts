@@ -121,6 +121,33 @@ describe("idle and growth", () => {
   });
 });
 
+describe("dedup expiry by record-time watermark", () => {
+  const DAY = 86_400_000;
+  const T = 1_000 * DAY;
+  const base = { deviceId: "d1", account: "A", sku: "utility", priceMicros: 4_000 };
+  const events = [
+    { ...base, messageId: "m1", sentAt: T - 1_000, deliveredAt: T - 500, appendedAt: T },
+    { ...base, messageId: "m2", sentAt: T + 36 * DAY - 1_000, deliveredAt: T + 36 * DAY - 500, appendedAt: T + 36 * DAY },
+    // A late copy of m1, after m1's dedup entry has expired: it must be past retention, not billed again.
+    { ...base, messageId: "m1", deviceId: "d2", sentAt: T - 1_000, deliveredAt: T, appendedAt: T + 36 * DAY + 1 },
+  ];
+
+  it("expires after the commit, and a later copy of the expired message is dropped, not re-billed", () => {
+    const stores = fixtureStores(events);
+    drain(stores, { maxBatch: 1 });
+    expect(stores.dedup[0]!.get("m1")).toBeUndefined();
+    expect(stores.dedup[0]!.get("m2")).toBeDefined();
+    expect(stores.drops.all().map((d) => d.offset)).toEqual([2]);
+    expect(Object.values(totals(stores.ledger)).reduce((a, b) => a + b, 0)).toBe(8_000);
+  });
+
+  it("does not expire within the fixture's few-minute span", () => {
+    const stores = fixtureStores();
+    drain(stores);
+    expect(stores.dedup[0]!.entries().size).toBe(7); // m1-m5, m7, m8 (m6 was dropped)
+  });
+});
+
 describe("guards", () => {
   it("throws if a dedup entry is newer than the current batch (I3 violated)", () => {
     const stores = fixtureStores();

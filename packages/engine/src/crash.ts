@@ -35,6 +35,22 @@ export interface CrashInjector {
 
 export const noCrashes: CrashInjector = { shouldCrash: () => false };
 
+/** Torture mode: crash with probability p at every crash point the worker reaches. */
+export function randomCrashes(next: () => number, p: number): CrashInjector {
+  return { shouldCrash: () => next() < p };
+}
+
+/** Crash if any injector says so. Every injector is consulted, so each one's PRNG stream advances the same way. */
+export function anyCrash(...injectors: CrashInjector[]): CrashInjector {
+  return {
+    shouldCrash(point, ctx) {
+      let crash = false;
+      for (const i of injectors) if (i.shouldCrash(point, ctx)) crash = true;
+      return crash;
+    },
+  };
+}
+
 export interface ScriptedCrash {
   readonly partition: number;
   /** Matches batchId.idx, which is stable across a replay. */
