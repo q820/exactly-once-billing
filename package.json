@@ -6,9 +6,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p apps/web",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "torture": "tsx apps/torture/src/cli.ts"
+    "torture": "tsx apps/torture/src/cli.ts",
+    "dev": "pnpm --filter @eob/web dev",
+    "build": "pnpm --filter @eob/web build"
   },
   "packageManager": "pnpm@10.34.9",
   "engines": {

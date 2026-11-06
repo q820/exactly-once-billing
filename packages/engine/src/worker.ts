@@ -259,7 +259,7 @@ export class Worker {
       }
       this.isReplay = true;
       this.phase = "read";
-      return { kind: "recovered", epoch, replay: plan };
+      return { kind: "recovered", epoch, replay: this.plan };
     }
     this.phase = "plan";
     return { kind: "recovered", epoch, replay: null };

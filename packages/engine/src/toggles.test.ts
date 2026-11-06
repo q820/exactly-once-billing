@@ -48,6 +48,14 @@ describe("commitFirst: commit before processing", () => {
     expect(run("commitFirst", "C1").drops).toEqual([]);
   });
 
+  it("crash at C3a: the rows not yet written are lost", () => {
+    expect(run("commitFirst", "C3a").net).toBe(-UTILITY); // m5's row was written, m4's wasn't
+  });
+
+  it("crash at C3 (every sink row already written): still correct, despite PLAN's 'C1-C3'", () => {
+    expect(run("commitFirst", "C3").matches).toBe(true);
+  });
+
   it("crash at C4 (after the real commit): still correct", () => {
     expect(run("commitFirst", "C4").matches).toBe(true);
   });
