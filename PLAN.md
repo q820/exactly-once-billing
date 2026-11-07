@@ -226,9 +226,8 @@ These are deliberately out of scope. Each one becomes a paragraph under "With mo
 
 ## Submission checklist
 
-- [ ] Public prototype URL (works in incognito, no login)
-- [ ] GitHub repo with README: one-paragraph pitch, how to run, crash-test results table
-- [ ] RATIONALE.md: theme choice, why this is non-obvious, the 4 rules, the decisions table, tradeoffs, extensions, time spent
+- [x] Public prototype URL (works in incognito, no login): https://q820.github.io/exactly-once-billing/
+- [x] GitHub repo with README: one-paragraph pitch, how to run, crash-test results table: https://github.com/q820/exactly-once-billing
+- [x] RATIONALE.md: theme choice, why this is non-obvious, the 4 rules, the decisions table, tradeoffs, learnings and iterations, extensions, time spent
 - [ ] Video (~5 min): 30s story → scenarios 2, 3, 5 live → crash-test table → what's next
-- [ ] Claude transcripts: this planning chat plus the Claude Code sessions
-- [ ] Reply to the recruiter with a submission date
+- [x] Claude transcripts: this planning chat plus the Claude Code session (`docs/transcripts/`)
