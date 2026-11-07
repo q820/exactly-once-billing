@@ -6,7 +6,7 @@
 
 A browser-playable simulation of an exactly-once billing pipeline for message deliveries that you can crash between any two steps. Exactly-once doesn't come from the framework: it comes from four small rules (deterministic batch boundaries, a dedup check that tells a replay from a duplicate, compare-and-set sink writes keyed by batch id, and committing last). Each rule has a toggle. A Node crash test crashes the pipeline hundreds of thousands of times and checks the ledger against an independently computed oracle: with every safeguard on it never over- or under-bills, and turning one off produces a specific, visible billing error.
 
-Design: [docs/RATIONALE.md](docs/RATIONALE.md). Plan: [PLAN.md](PLAN.md).
+Design: [docs/RATIONALE.md](docs/RATIONALE.md). Plan: [PLAN.md](PLAN.md). AI transcripts: [planning chat (claude.ai)](docs/transcripts/planning-chat.md) and [build session (Claude Code)](docs/transcripts/claude-code-session.md).
 
 ## Run
 
@@ -50,6 +50,7 @@ apps/crash-test/      seed runner, ledger-vs-oracle check, crash-test CLI
 apps/web/          Vite + React demo; the crash test runs in Web Worker
 results/           crash-test output
 docs/RATIONALE.md  design write-up
+docs/transcripts/  planning chat and Claude Code session
 ```
 
 ## Deploy

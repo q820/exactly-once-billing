@@ -231,4 +231,4 @@ These are deliberately out of scope. Each one becomes a paragraph under "With mo
 - [ ] RATIONALE.md: theme choice, why this is non-obvious, the 4 rules, the decisions table, tradeoffs, extensions, time spent
 - [ ] Video (~5 min): 30s story → scenarios 2, 3, 5 live → crash-test table → what's next
 - [ ] Claude transcripts: this planning chat plus the Claude Code sessions
-- [ ] Reply to Michelle with a submission date
+- [ ] Reply to the recruiter with a submission date
