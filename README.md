@@ -1,7 +1,8 @@
 # Exactly-Once Delivery Billing
 
-<!-- CI badge: replace OWNER/REPO once the repo is on GitHub -->
-<!-- ![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg) -->
+[![CI](https://github.com/q820/exactly-once-billing/actions/workflows/ci.yml/badge.svg)](https://github.com/q820/exactly-once-billing/actions/workflows/ci.yml)
+
+**Live demo: https://q820.github.io/exactly-once-billing/**
 
 A browser-playable simulation of an exactly-once billing pipeline for message deliveries that you can crash between any two steps. Exactly-once doesn't come from the framework: it comes from four small rules (deterministic batch boundaries, a dedup check that tells a replay from a duplicate, compare-and-set sink writes keyed by batch id, and committing last). Each rule has a toggle. A Node crash test crashes the pipeline hundreds of thousands of times and checks the ledger against an independently computed oracle: with every safeguard on it never over- or under-bills, and turning one off produces a specific, visible billing error.
 
