@@ -5,7 +5,7 @@
 | Config | Seeds | Failed seeds | Over-billed | Under-billed | Invariant violations | Crashes injected | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | all safeguards on | 2000 | 0 (0%) | $0.00 | $0.00 | 0 | 746,507 | pass |
-| `commitFirst` | 2000 | 2000 (100%) | $0.24 | $16,778.17 | 0 | 613,411 | pass |
+| `atMostOnce` | 2000 | 2000 (100%) | $0.24 | $16,778.17 | 0 | 613,411 | pass |
 | `noDedupStore` | 2000 | 2000 (100%) | $27,536.39 | $0.00 | 0 | 764,192 | pass |
 | `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `nondeterministicBatches` | 2000 | 2000 (100%) | $0.00 | $489.88 | 0 | 636,117 | pass |
@@ -16,7 +16,7 @@ Verdict: "all safeguards on" passes with 0 failed seeds; each break-it toggle pa
 
 ## First failing seed per toggle
 
-### `commitFirst`: seed 1
+### `atMostOnce`: seed 1
 
 under-billed $9.03; DropLog != oracle drops; 268 ledger rows differ; 296 crashes in the run.
 

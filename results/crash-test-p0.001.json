@@ -1,0 +1,180 @@
+{
+  "seeds": 2000,
+  "p": 0.001,
+  "reports": [
+    {
+      "name": "all safeguards on",
+      "toggles": [],
+      "seeds": 2000,
+      "failed": 0,
+      "crashes": 12274,
+      "overMicros": 0,
+      "underMicros": 0,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": null,
+      "ms": 10665.8719
+    },
+    {
+      "name": "atMostOnce",
+      "toggles": [
+        "atMostOnce"
+      ],
+      "seeds": 2000,
+      "failed": 1943,
+      "crashes": 12228,
+      "overMicros": 69500,
+      "underMicros": 356816500,
+      "violations": 0,
+      "dropMismatches": 30,
+      "firstFailure": {
+        "seed": 1,
+        "reason": "under-billed $0.18",
+        "crashCount": 4,
+        "crashTrace": [
+          "1790815032950 P0 CRASH C4 (1,37) restartAt=1790815043276",
+          "1790816240150 P5 CRASH C2 (1,58) restartAt=1790816256019",
+          "1790816421300 P1 CRASH C3a (1,61) restartAt=1790816434334",
+          "1790817930500 P7 CRASH C1 (1,88) restartAt=1790817938313"
+        ],
+        "mismatchedRows": 14
+      },
+      "ms": 10061.312269999999
+    },
+    {
+      "name": "noDedupStore",
+      "toggles": [
+        "noDedupStore"
+      ],
+      "seeds": 2000,
+      "failed": 2000,
+      "crashes": 12558,
+      "overMicros": 27536390000,
+      "underMicros": 0,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": {
+        "seed": 1,
+        "reason": "over-billed $13.20",
+        "crashCount": 4,
+        "crashTrace": [
+          "1790815032900 P4 CRASH C3 (1,37) restartAt=1790815043226",
+          "1790816240250 P1 CRASH C3 (1,58) restartAt=1790816256119",
+          "1790816421300 P2 CRASH C3a (1,61) restartAt=1790816434334",
+          "1790817929950 P0 CRASH C2a (1,86) restartAt=1790817937763"
+        ],
+        "mismatchedRows": 282
+      },
+      "ms": 7645.426834000002
+    },
+    {
+      "name": "dedupIgnoresBatchId",
+      "toggles": [
+        "dedupIgnoresBatchId"
+      ],
+      "seeds": 2000,
+      "failed": 1883,
+      "crashes": 12258,
+      "overMicros": 0,
+      "underMicros": 216746500,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": {
+        "seed": 1,
+        "reason": "under-billed $0.10",
+        "crashCount": 4,
+        "crashTrace": [
+          "1790815032950 P0 CRASH C4 (1,37) restartAt=1790815043276",
+          "1790816240150 P5 CRASH C2 (1,58) restartAt=1790816256019",
+          "1790816421200 P4 CRASH C2 (1,61) restartAt=1790816434234",
+          "1790817930300 P3 CRASH C2a (1,87) restartAt=1790817938113"
+        ],
+        "mismatchedRows": 9
+      },
+      "ms": 10081.462534999995
+    },
+    {
+      "name": "nondeterministicBatches",
+      "toggles": [
+        "nondeterministicBatches"
+      ],
+      "seeds": 2000,
+      "failed": 426,
+      "crashes": 12235,
+      "overMicros": 0,
+      "underMicros": 9360500,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": {
+        "seed": 5,
+        "reason": "under-billed $0.00",
+        "crashCount": 9,
+        "crashTrace": [
+          "1790813524200 P1 CRASH C4 (1,12) restartAt=1790813541742",
+          "1790813524200 P7 CRASH C4 (1,12) restartAt=1790813543153",
+          "1790813704950 P5 CRASH C1 (1,15) restartAt=1790813710749",
+          "1790814990592 P1 CRASH C1 (2,38) restartAt=1790815002007",
+          "1790815575950 P6 CRASH C2 (1,46) restartAt=1790815584558",
+          "1790815967907 P1 CRASH C3 (3,54) restartAt=1790815978193",
+          "1790817749100 P3 CRASH C1 (1,84) restartAt=1790817767967",
+          "1790817828667 P3 CRASH C4 (2,85) restartAt=1790817843326",
+          "1790819146258 P6 CRASH C4 (2,107) restartAt=1790819166680"
+        ],
+        "mismatchedRows": 1
+      },
+      "ms": 10928.531232000001
+    },
+    {
+      "name": "blindUpsert",
+      "toggles": [
+        "blindUpsert"
+      ],
+      "seeds": 2000,
+      "failed": 1707,
+      "crashes": 12274,
+      "overMicros": 153851000,
+      "underMicros": 0,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": {
+        "seed": 1,
+        "reason": "over-billed $0.06",
+        "crashCount": 4,
+        "crashTrace": [
+          "1790815032950 P0 CRASH C4 (1,37) restartAt=1790815043276",
+          "1790816240150 P5 CRASH C2 (1,58) restartAt=1790816256019",
+          "1790816421200 P2 CRASH C2 (1,61) restartAt=1790816434234",
+          "1790817930050 P4 CRASH C3 (1,86) restartAt=1790817937863"
+        ],
+        "mismatchedRows": 5
+      },
+      "ms": 10895.714002999994
+    },
+    {
+      "name": "restampReplay",
+      "toggles": [
+        "restampReplay"
+      ],
+      "seeds": 2000,
+      "failed": 1883,
+      "crashes": 12258,
+      "overMicros": 0,
+      "underMicros": 216746500,
+      "violations": 0,
+      "dropMismatches": 0,
+      "firstFailure": {
+        "seed": 1,
+        "reason": "under-billed $0.10",
+        "crashCount": 4,
+        "crashTrace": [
+          "1790815032950 P0 CRASH C4 (1,37) restartAt=1790815043276",
+          "1790816240150 P5 CRASH C2 (1,58) restartAt=1790816256019",
+          "1790816421200 P4 CRASH C2 (1,61) restartAt=1790816434234",
+          "1790817930300 P3 CRASH C2a (1,87) restartAt=1790817938113"
+        ],
+        "mismatchedRows": 9
+      },
+      "ms": 11563.247352000006
+    }
+  ]
+}

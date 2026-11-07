@@ -97,7 +97,7 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
-| `commitFirst`: commit before processing (the legacy at-most-once behavior) | Crash at C1–C3 | Under-billed. The batch is skipped on restart | Why the original Scribe/Stylus pipeline lost revenue |
+| `atMostOnce`: commit before processing (the legacy at-most-once behavior) | Crash at C1–C3 | Under-billed. The batch is skipped on restart | Why the original Scribe/Stylus pipeline lost revenue |
 | `noDedupStore`: at-least-once only | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
 | `dedupIgnoresBatchId`: any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
 | `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
@@ -157,7 +157,7 @@ Layout, top to bottom:
 Guided scenarios (each pins a seed, armed crashes and toggles):
 
 1. **Normal day:** duplicates and late events, no crashes. All green, and late events land in old buckets.
-2. **The legacy pipeline:** commitFirst on, crash at C3. Red, under-billed.
+2. **The legacy pipeline:** atMostOnce on, crash at C3. Red, under-billed.
 3. **Crash after dedup, before sink:** safeguards on, crash at C2. Green. Then flip dedupIgnoresBatchId and replay. Red, under-billed.
 4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
 5. **Crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip blindUpsert. Red, over-billed.

@@ -73,13 +73,13 @@ export const SCENARIOS: readonly Scenario[] = [
     id: "legacy",
     title: "2. The legacy pipeline",
     summary:
-      "commitFirst is on: the worker commits the batch range before processing it, the way the original at-most-once pipeline did. P3 crashes at C3a, halfway through its sink writes.",
+      "atMostOnce is on: the worker commits the batch range before processing it, the way the original at-most-once pipeline did. P3 crashes at C3a, halfway through its sink writes.",
     steps: [
       {
-        label: "Crash at C3a with commitFirst",
+        label: "Crash at C3a with atMostOnce",
         narration:
           "On restart the batch already looks committed, so it is never replayed. The rows written before the crash survive; the rest are lost for good, and later copies of those messages are treated as duplicates.",
-        spec: spec({ toggles: ["commitFirst"], crashes: crashAt("C3a") }),
+        spec: spec({ toggles: ["atMostOnce"], crashes: crashAt("C3a") }),
         expect: "under",
         focusPartition: 3,
       },

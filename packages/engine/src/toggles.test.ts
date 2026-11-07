@@ -37,27 +37,27 @@ function run(
 // Batch 2 keeps m4 (utility) and m5 (marketing, late); their later copies sit in batch 3.
 const BATCH2 = UTILITY + MARKETING;
 
-describe("commitFirst: commit before processing", () => {
+describe("atMostOnce: commit before processing", () => {
   it("crash at C2: batch 2 is skipped on restart and its copies in batch 3 look like duplicates -> under-billed", () => {
-    const r = run("commitFirst", "C2");
+    const r = run("atMostOnce", "C2");
     expect(r.net).toBe(-BATCH2);
     expect(r.drops).toEqual([7]); // the filter step ran before the crash, so the drop was recorded
   });
 
   it("crash at C1: batch 2 is skipped; the DropLog misses its past-retention event", () => {
-    expect(run("commitFirst", "C1").drops).toEqual([]);
+    expect(run("atMostOnce", "C1").drops).toEqual([]);
   });
 
   it("crash at C3a: the rows not yet written are lost", () => {
-    expect(run("commitFirst", "C3a").net).toBe(-UTILITY); // m5's row was written, m4's wasn't
+    expect(run("atMostOnce", "C3a").net).toBe(-UTILITY); // m5's row was written, m4's wasn't
   });
 
   it("crash at C3 (every sink row already written): still correct, despite PLAN's 'C1-C3'", () => {
-    expect(run("commitFirst", "C3").matches).toBe(true);
+    expect(run("atMostOnce", "C3").matches).toBe(true);
   });
 
   it("crash at C4 (after the real commit): still correct", () => {
-    expect(run("commitFirst", "C4").matches).toBe(true);
+    expect(run("atMostOnce", "C4").matches).toBe(true);
   });
 });
 

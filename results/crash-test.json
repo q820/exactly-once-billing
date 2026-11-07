@@ -16,9 +16,9 @@
       "ms": 11710.939587
     },
     {
-      "name": "commitFirst",
+      "name": "atMostOnce",
       "toggles": [
-        "commitFirst"
+        "atMostOnce"
       ],
       "seeds": 2000,
       "failed": 2000,

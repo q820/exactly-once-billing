@@ -28,7 +28,7 @@ export const ALL_SAFEGUARDS: Safeguards = {
 };
 
 export type ToggleName =
-  | "commitFirst"
+  | "atMostOnce"
   | "noDedupStore"
   | "dedupIgnoresBatchId"
   | "nondeterministicBatches"
@@ -47,10 +47,10 @@ export interface ToggleInfo {
 
 export const TOGGLES: readonly ToggleInfo[] = [
   {
-    name: "commitFirst",
+    name: "atMostOnce",
     safeguard: "commitLast",
     description: "Commit before processing (the legacy at-most-once behavior)",
-    exposedBy: "Crash at C1-C3",
+    exposedBy: "Crash at C1-C3a",
     result: "under",
     teaches: "Why the original Scribe/Stylus pipeline lost revenue",
   },

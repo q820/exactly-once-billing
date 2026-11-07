@@ -25,7 +25,7 @@ Late events are normal, not a failure mode: a phone that comes online three week
 - **The oracle** (`packages/oracle`, 50 lines) restates the billing rules from scratch: drop past-retention events, keep the first copy of each messageId in log order, sum by (account, sku, half-hour). It imports nothing, lint forbids it from importing the engine, and it reads the generated events, not the pipeline's source log. It can disagree with the engine, and a test tampers with the ledger to show it does.
 - **Invariants** I1, I3 and I4 are checked on every store write (only writes can break them, so this equals "after every step" at O(1) cost). I2, ledger == oracle and DropLog == oracle drops, is checked once all partitions drain.
 - **Unit tests** (128) are written against a hand-written 12-event fixture with expected totals as literals. They cover every crash point, five replays of one batch in a row, dedup and sink in swapped order, crashes in every batch, and one targeted test per toggle. Each toggle test shows the predicted error at the exposing crash point and correct billing at a crash point that doesn't expose it. A mutation check (re-introducing three of the toggled bugs by hand) failed 9 to 18 tests each.
-- **The crash test** crashes every crash point with probability 0.05 over 2,000 seeds per configuration: 746,507 crashes with all safeguards on and 0 failed seeds. The table is in the [README](../README.md) and [results/crash-test.md](../results/crash-test.md).
+- **The crash test** crashes every crash point with probability 0.05 over 2,000 seeds per configuration: 746,507 crashes with all safeguards on and 0 failed seeds. A second run at p = 0.001 (about 6 crashes per seed) also has 0 failed seeds with all safeguards on and gives each toggle a failure rate, from 21% (`nondeterministicBatches`) to 100% (`noDedupStore`). The tables are in the [README](../README.md) and [results/crash-test.md](../results/crash-test.md).
 
 ## Locked decisions
 
@@ -53,15 +53,15 @@ Late events are normal, not a failure mode: a phone that comes online three week
 
 These came out of the toggle tests and the crash-test run, and are not yet folded back into PLAN.md:
 
-- **`commitFirst` is exposed by C1 through C3a, not C1 through C3.** At C3 every sink row is already written, so committing early loses nothing. The legacy-pipeline scenario crashes at C3a instead.
+- **`atMostOnce` is exposed by C1 through C3a, not C1 through C3.** At C3 every sink row is already written, so committing early loses nothing. The legacy-pipeline scenario crashes at C3a instead.
 - **`restampReplay` and `dedupIgnoresBatchId` produce identical results with dedup before sink:** in both, the replay mistakes its own first-attempt entries for duplicates. They differ when the sink runs first: the re-stamped id beats the row's CAS, so `restampReplay` over-bills where `dedupIgnoresBatchId` stays correct. A test pins the difference.
-- **`commitFirst` over-bills a few rows ($0.24 over 2,000 seeds) while under-billing $16,778.** When a skipped batch loses a message's first copy, a later copy from another device can land in the next half-hour bucket and be billed there.
+- **`atMostOnce` over-bills a few rows ($0.24 over 2,000 seeds) while under-billing $16,778.** When a skipped batch loses a message's first copy, a later copy from another device can land in the next half-hour bucket and be billed there.
 
 ## Tradeoffs
 
 - **In-memory stores** keep the demo in a browser tab. The engine depends only on the store interfaces, so a SQLite store is a drop-in.
 - **Small demo batches.** The UI uses 1,500 messages, maxBatch 20 and a 5-minute poll so batches hold about 9 records and the crash points are watchable; the crash-test CLI uses the full PLAN defaults.
-- **Crash probability 0.05 per crash point** means every seed sees hundreds of crashes, so every toggle fails 100% of seeds. That proves each removal breaks billing; it says little about how rare each failure is. A lower p would give a rate per toggle.
+- **Two crash rates.** At p = 0.05 every seed sees hundreds of crashes, so every toggle fails 100% of seeds: proof that each removal breaks billing. At p = 0.001 the failure rates show how often each bug would bite in practice.
 
 ## With more time
 

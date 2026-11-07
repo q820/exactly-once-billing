@@ -23,17 +23,22 @@ pnpm build                                # static site in apps/web/dist
 
 ## Crash test results
 
-2,000 seeds, crash probability 0.05 at every crash point, default workload (5,000 messages over 2 sim-hours, 8 partitions). Full output with crash traces: [results/crash-test.md](results/crash-test.md).
+2,000 seeds per config, default workload (5,000 messages over 2 sim-hours, 8 partitions), at two crash rates per crash point:
 
-| Config | Failed seeds | Over-billed | Under-billed | Crashes injected |
+- **p = 0.05:** a few hundred crashes per seed. Shows each toggle always breaks billing under heavy crashing. Full output: [results/crash-test.md](results/crash-test.md).
+- **p = 0.001:** about 6 crashes per seed. Shows how often each bug bites under realistic crashing. Full output: [results/crash-test-p0.001.md](results/crash-test-p0.001.md).
+
+| Config | Failed seeds, p=0.05 | Over / under, p=0.05 | Failed seeds, p=0.001 | Over / under, p=0.001 |
 | --- | ---: | ---: | ---: | ---: |
-| all safeguards on | 0 / 2000 | $0.00 | $0.00 | 746,507 |
-| `commitFirst` | 2000 / 2000 | $0.24 | $16,778.17 | 613,411 |
-| `noDedupStore` | 2000 / 2000 | $27,536.39 | $0.00 | 764,192 |
-| `dedupIgnoresBatchId` | 2000 / 2000 | $0.00 | $10,547.52 | 711,446 |
-| `nondeterministicBatches` | 2000 / 2000 | $0.00 | $489.88 | 636,117 |
-| `blindUpsert` | 2000 / 2000 | $8,386.32 | $0.00 | 746,507 |
-| `restampReplay` | 2000 / 2000 | $0.00 | $10,547.52 | 711,446 |
+| all safeguards on | **0 / 2000** (746,507 crashes) | $0.00 / $0.00 | **0 / 2000** (12,274 crashes) | $0.00 / $0.00 |
+| `atMostOnce` | 2000 / 2000 | $0.24 / $16,778.17 | 1943 / 2000 (97%) | $0.07 / $356.82 |
+| `noDedupStore` | 2000 / 2000 | $27,536.39 / $0.00 | 2000 / 2000 (100%) | $27,536.39 / $0.00 |
+| `dedupIgnoresBatchId` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
+| `nondeterministicBatches` | 2000 / 2000 | $0.00 / $489.88 | 426 / 2000 (21%) | $0.00 / $9.36 |
+| `blindUpsert` | 2000 / 2000 | $8,386.32 / $0.00 | 1707 / 2000 (85%) | $153.85 / $0.00 |
+| `restampReplay` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
+
+`noDedupStore` fails without any crash: it bills every multi-device copy and infra retry. `nondeterministicBatches` fails least often because it needs a crash and a replay whose re-picked range comes out shorter.
 
 ## Layout
 
