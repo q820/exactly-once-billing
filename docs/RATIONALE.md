@@ -76,18 +76,19 @@ These came out of the toggle tests and the crash-test run, and are now folded ba
 
 ## Time spent
 
-The planning chat is timed from its transcript (first message to finished plan). The build is measured from the Claude Code session transcript and commit history: "active" counts transcript activity (prompts, tool calls, replies) with idle gaps over 20 minutes removed, so it includes my time reading and prompting but not time away.
+**About 2 h 40 min of hands-on time.** Measured from the two transcripts, counting work, not elapsed time:
 
-| Phase | When (PT) | Active |
-| --- | --- | ---: |
-| Planning chat (claude.ai): theme and direction, protocol design, scope cuts (delivery events only, flat retention TTL, static partitions), the build plan | Nov 4, 09:36–~11:20 | ≈ 1 h 45 min |
-| Setup and M0: Node 24 install workaround (no Homebrew bottle for this Intel Mac), pnpm workspace, lint rules, CI | Nov 4, 16:07–17:53 | 58 min |
-| M1: engine types, stores, worker protocol, crash points, tests (plan reviewed first) | Nov 4, 21:23–21:28 | 5 min |
-| M2–M4, one autonomous run: scheduler, workload, oracle, invariants, toggles, crash-test CLI, 2,000-seed run, web UI | Nov 5, 08:40–09:02 | 22 min |
-| M4 browser check and M5 docs (README, RATIONALE, Pages workflow) | Nov 5, 17:43–17:47 | 4 min |
-| Review and iteration: rename to crash test, cut processingClock, 30-day retention, atMostOnce/atLeastOnce, p = 0.001 run, UI fixes (remount bug, tooltips, stable safeguards, read-only scenarios, Sandbox, crash seed), spec re-validation | Nov 7, 09:51–11:28 | 97 min |
-| Publish: GitHub repo, CI, GitHub Pages | Nov 7, 12:45–13:14 | 29 min |
-| Build total (Claude Code) | Nov 4–7 | ≈ 3 h 35 min |
-| **Total** | | **≈ 5 h 20 min** |
+- **My time:** the gap before each of my prompts, capped at 3 minutes (5 for the one long design message). Anything longer was a break.
+- **Claude's time:** only consecutive steps under 5 minutes apart (writing code, running tests, the 2,000-seed runs). Waiting on me or on a stalled background job doesn't count.
 
-The longest idle stretch (Nov 5, 09:02–17:43) was the build waiting on the Chrome extension setup for in-browser verification; it is not counted.
+| Phase | When (PT) | Me | Claude | Total |
+| --- | --- | ---: | ---: | ---: |
+| Planning chat (claude.ai): theme, protocol design, scope cuts, build plan | Nov 4 | 17 min | ~12 min | ~30 min |
+| Setup and M0: Node 24 install workaround, pnpm workspace, lint rules, CI | Nov 4 | 10 min | 7 min | 17 min |
+| M1: engine types, stores, worker protocol, crash points, tests (plan reviewed first) | Nov 4 | 3 min | 5 min | 8 min |
+| M2–M5 in one autonomous run: scheduler, workload, oracle, invariants, toggles, crash-test CLI, 2,000-seed run, web UI, docs | Nov 5 | 6 min | 26 min | 32 min |
+| Review and iteration: crash-test rename, cut processingClock, 30-day retention, atMostOnce/atLeastOnce, p = 0.001 run, UI fixes, Sandbox, crash seed, spec re-validation | Nov 7 | 29 min | 22 min | 50 min |
+| Publish and docs: GitHub repo, CI, Pages, time accounting | Nov 7 | 16 min | 6 min | 22 min |
+| **Total** | Nov 4–7 | **~1 h 20 min** | **~1 h 20 min** | **~2 h 40 min** |
+
+Elapsed time was much longer (Nov 4–7) because of breaks and because the build waited on me twice: once for plan approval, once for the Chrome extension setup.
