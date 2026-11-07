@@ -1,6 +1,6 @@
-# Torture results
+# Crash test results
 
-`pnpm torture -- --seeds 2000 --p 0.05`, crash probability 0.05 at every crash point, default workload (PLAN.md).
+`pnpm crash-test -- --seeds 2000 --p 0.05`, crash probability 0.05 at every crash point, default workload (PLAN.md).
 
 | Config | Seeds | Failed seeds | Over-billed | Under-billed | Invariant violations | Crashes injected | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |

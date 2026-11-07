@@ -6,7 +6,7 @@ export interface RunSpec {
   readonly overrides: SimOverrides;
   readonly safeguards: Safeguards;
   readonly crashes: readonly ScriptedCrash[];
-  /** Random crashes at every crash point (torture replays). */
+  /** Random crashes at every crash point (crash-test replays). */
   readonly crashProbability: number;
 }
 
@@ -29,7 +29,7 @@ export interface Scenario {
   readonly steps: readonly ScenarioStep[];
   /** Messages the inspector should offer ("late" or "dropped" or "lost"). */
   readonly spotlight?: "late" | "lost";
-  readonly torture?: boolean;
+  readonly crashTest?: boolean;
 }
 
 /** Small enough to watch, big enough to have every kind of event. */
@@ -163,8 +163,8 @@ export const SCENARIOS: readonly Scenario[] = [
     spotlight: "late",
   },
   {
-    id: "torture",
-    title: "7. Torture",
+    id: "crash-test",
+    title: "7. Crash test",
     summary:
       "500 seeds with random crashes at every crash point, run in Web Workers: all safeguards on, then each toggle on its own.",
     steps: [
@@ -176,6 +176,6 @@ export const SCENARIOS: readonly Scenario[] = [
         focusPartition: 0,
       },
     ],
-    torture: true,
+    crashTest: true,
   },
 ];

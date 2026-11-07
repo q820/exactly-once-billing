@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b && tsc -p apps/web",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "torture": "tsx apps/torture/src/cli.ts",
+    "crash-test": "tsx apps/crash-test/src/cli.ts",
     "dev": "pnpm --filter @eob/web dev",
     "build": "pnpm --filter @eob/web build"
   },

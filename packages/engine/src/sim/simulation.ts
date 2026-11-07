@@ -56,7 +56,7 @@ export function simConfig(seed: number, overrides: SimOverrides = {}): SimConfig
 }
 
 export interface SimOptions {
-  /** Random crashes with this probability at each crash point (torture mode). */
+  /** Random crashes with this probability at each crash point (crash-test mode). */
   readonly crashProbability?: number;
   /** Scripted crashes, combined with random ones. */
   readonly crash?: CrashInjector;

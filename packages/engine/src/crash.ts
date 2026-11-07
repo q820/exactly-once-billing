@@ -35,7 +35,7 @@ export interface CrashInjector {
 
 export const noCrashes: CrashInjector = { shouldCrash: () => false };
 
-/** Torture mode: crash with probability p at every crash point the worker reaches. */
+/** Crash-test mode: crash with probability p at every crash point the worker reaches. */
 export function randomCrashes(next: () => number, p: number): CrashInjector {
   return { shouldCrash: () => next() < p };
 }

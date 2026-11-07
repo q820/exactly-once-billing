@@ -2,16 +2,16 @@ import { breakIt, formatSimEvent, TOGGLES, type SimOverrides, type ToggleName } 
 import { runSeed, type SeedResult } from "./verify.js";
 
 /**
- * Torture runs (PLAN.md, "Torture test"). Browser-safe: the Node CLI and the
+ * Crash-test runs (PLAN.md, "Crash test"). Browser-safe: the Node CLI and the
  * web app's Web Worker both use this.
  */
 
-export interface TortureConfig {
+export interface CrashTestConfig {
   readonly name: string;
   readonly toggles: readonly ToggleName[];
 }
 
-export const TORTURE_CONFIGS: readonly TortureConfig[] = [
+export const CRASH_TEST_CONFIGS: readonly CrashTestConfig[] = [
   { name: "all safeguards on", toggles: [] },
   ...TOGGLES.map((t) => ({ name: t.name, toggles: [t.name] })),
 ];
@@ -27,12 +27,12 @@ export interface SeedSummary {
   readonly violation: string | null;
 }
 
-export interface TortureParams {
+export interface CrashTestParams {
   readonly p: number;
   readonly overrides?: SimOverrides;
 }
 
-export function runTortureSeed(seed: number, toggles: readonly ToggleName[], params: TortureParams): SeedSummary {
+export function runCrashTestSeed(seed: number, toggles: readonly ToggleName[], params: CrashTestParams): SeedSummary {
   return summarize(
     runSeed(seed, params.overrides ?? {}, {
       crashProbability: params.p,
@@ -91,7 +91,7 @@ export function failureReason(s: SeedSummary): string {
 export function explainFailure(
   seed: number,
   toggles: readonly ToggleName[],
-  params: TortureParams,
+  params: CrashTestParams,
   maxLines = 12,
 ): FirstFailure {
   const r = runSeed(
@@ -111,7 +111,7 @@ export function explainFailure(
 }
 
 export function aggregate(
-  config: TortureConfig,
+  config: CrashTestConfig,
   summaries: readonly SeedSummary[],
   ms: number,
   firstFailure: FirstFailure | null,
@@ -132,7 +132,7 @@ export function aggregate(
   };
 }
 
-/** A toggle passes the torture test when it fails at least one seed; "all on" when it fails none. */
+/** A toggle passes the crash test when it fails at least one seed; "all on" when it fails none. */
 export function verdict(r: ConfigReport): "pass" | "FAIL" {
   return r.toggles.length === 0 ? (r.failed === 0 ? "pass" : "FAIL") : r.failed > 0 ? "pass" : "FAIL";
 }
@@ -145,7 +145,7 @@ const pct = (a: number, b: number) => (b === 0 ? "0%" : `${((100 * a) / b).toFix
 
 export function renderMarkdown(reports: readonly ConfigReport[], meta: { p: number; command: string }): string {
   const lines = [
-    "# Torture results",
+    "# Crash test results",
     "",
     `\`${meta.command}\`, crash probability ${meta.p} at every crash point, default workload (PLAN.md).`,
     "",

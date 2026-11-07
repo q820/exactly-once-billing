@@ -1,12 +1,12 @@
 import { parentPort, workerData } from "node:worker_threads";
 import type { ToggleName } from "@eob/engine";
-import { runTortureSeed, type TortureParams } from "./torture.js";
+import { runCrashTestSeed, type CrashTestParams } from "./crashTest.js";
 
 interface Job {
   readonly seeds: readonly number[];
   readonly toggles: readonly ToggleName[];
-  readonly params: TortureParams;
+  readonly params: CrashTestParams;
 }
 
 const job = workerData as Job;
-parentPort!.postMessage(job.seeds.map((seed) => runTortureSeed(seed, job.toggles, job.params)));
+parentPort!.postMessage(job.seeds.map((seed) => runCrashTestSeed(seed, job.toggles, job.params)));

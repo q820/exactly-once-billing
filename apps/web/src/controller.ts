@@ -12,7 +12,7 @@ import {
   type TotalsDiff,
 } from "@eob/engine";
 import { computeExpected, eventKey, type OracleResult } from "@eob/oracle";
-import { engineDropKeys } from "@eob/torture";
+import { engineDropKeys } from "@eob/crash-test";
 import { simOptions } from "./outcome.js";
 import type { RunSpec } from "./scenarios.js";
 

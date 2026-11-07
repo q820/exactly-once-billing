@@ -1,4 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "packages/engine" }, { "path": "packages/oracle" }, { "path": "apps/torture" }]
+  "references": [{ "path": "packages/engine" }, { "path": "packages/oracle" }, { "path": "apps/crash-test" }]
 }

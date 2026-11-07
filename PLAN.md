@@ -4,7 +4,7 @@ Source: [Claude Doc](https://claude.ai/artifact/LpXhuHe2epGRVTtZdbn9ZJ), copied 
 
 ## Goal and pitch
 
-We're building a browser-playable, crash-anywhere simulation of an exactly-once billing pipeline for message deliveries. A Node torture test kills it thousands of times and proves the ledger never over- or under-bills.
+We're building a browser-playable, crash-anywhere simulation of an exactly-once billing pipeline for message deliveries. A Node crash test kills it thousands of times and proves the ledger never over- or under-bills.
 
 **Theme:** Systems & Reliability.
 
@@ -16,7 +16,7 @@ We're building a browser-playable, crash-anywhere simulation of an exactly-once 
 
 **What a reviewer sees in 60 seconds:** pick a scenario, click "crash here" between two pipeline steps, and watch the worker restart and replay. The ledger stays equal to an independently computed oracle. Then flip one safeguard off, replay the same seed, and watch the diff go red with dollars over- or under-billed.
 
-**Time budget:** about 6 hours of build (hard cap 8), with a cut line after the torture test (see Milestones).
+**Time budget:** about 6 hours of build (hard cap 8), with a cut line after the crash test (see Milestones).
 
 ## Locked design decisions
 
@@ -36,7 +36,7 @@ These are settled. Claude Code should not reopen them without asking.
 
 ## Architecture
 
-The architecture has five durable stores and one stateless worker loop per partition. A crash wipes worker memory but never the stores. The engine depends only on the store interfaces and a Clock, so the same code runs in the browser simulation, in the Node torture test and, as a stretch goal, on SQLite.
+The architecture has five durable stores and one stateless worker loop per partition. A crash wipes worker memory but never the stores. The engine depends only on the store interfaces and a Clock, so the same code runs in the browser simulation, in the Node crash test and, as a stretch goal, on SQLite.
 
 The oracle reads the same events as the workers but shares no code with them, so it can disagree with the engine.
 
@@ -93,7 +93,7 @@ Exactly-once means at-least-once plus idempotency. Every step is safe to repeat,
 
 ## Break-it toggles
 
-Each toggle removes exactly one safeguard. The demo and the torture test both prove that each removal causes a specific billing error. The engine reads them from a `Safeguards` config object, all on by default; they are not scattered `if (demo)` checks.
+Each toggle removes exactly one safeguard. The demo and the crash test both prove that each removal causes a specific billing error. The engine reads them from a `Safeguards` config object, all on by default; they are not scattered `if (demo)` checks.
 
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
@@ -109,13 +109,13 @@ The last two toggles are stretch goals. Each guided scenario in the UI pairs one
 
 ## Simulation and verification
 
-The whole run is a pure function of (seed, config, safeguards). Any failure the torture test finds becomes a one-click replay in the UI.
+The whole run is a pure function of (seed, config, safeguards). Any failure the crash test finds becomes a one-click replay in the UI.
 
 ### Scheduler
 
 - A discrete-event priority queue on a sim clock (ms). It uses a seeded PRNG (mulberry32 or similar), with no `Math.random` or `Date.now` anywhere in the engine.
 - The producer and the workers are actors. Each pipeline step is a single event, so a crash can land between any two steps.
-- Crash injection comes in two forms: (a) a scripted crash ("partition 3, batch 2, at C2"), used by the UI buttons and guided scenarios; (b) random crashes with probability p at each crash point, used by the torture test.
+- Crash injection comes in two forms: (a) a scripted crash ("partition 3, batch 2, at C2"), used by the UI buttons and guided scenarios; (b) random crashes with probability p at each crash point, used by the crash test.
 - A crash discards the Worker object. Platform schedules a restart after a seeded delay. The restarted worker calls `bumpEpoch()` and runs recovery.
 
 ### Workload generator (defaults are adjustable)
@@ -132,12 +132,12 @@ The whole run is a pure function of (seed, config, safeguards). Any failure the 
 - Drop events past retention, keep the first copy of each messageId in log order, and sum priceMicros by (account, sku, halfHour).
 - Never import engine code into the oracle. It must be able to disagree with the engine.
 
-### Torture test (`npm run torture -- --seeds 2000 --p 0.05`)
+### Crash test (`npm run crash-test -- --seeds 2000 --p 0.05`)
 
 - For each seed: generate the workload, run with random crashes until every partition is drained, then assert I1–I4 after each step and I2 at the end.
 - Safeguards all on: 0 failures expected. Print seeds/second and the total number of crashes injected (expect thousands).
 - Each break-it toggle on its own: the test must fail. Report the % of seeds that failed, total over- and under-billed micros, and the first failing seed with its crash trace. If a toggle never fails, the test or the toggle is wrong.
-- Output a markdown table (toggle × failed seeds × ±$) to `results/torture.md`. That table goes straight into the written rationale and the UI.
+- Output a markdown table (toggle × failed seeds × ±$) to `results/crash-test.md`. That table goes straight into the written rationale and the UI.
 
 **Unit tests (vitest):** one targeted test per crash point and per toggle. Also a test that swaps the order of the dedup and sink steps and still passes, and a test that replays one batch five times in a row and still passes.
 
@@ -163,7 +163,7 @@ Guided scenarios (each pins a seed, armed crashes and toggles):
 4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
 5. **Crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip blindUpsert. Red, over-billed.
 6. **The phone that came back:** one message delivered 3 weeks late lands in an old bucket. A copy past 35 days lands in the DropLog.
-7. **Torture:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
+7. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
 
 **Visual tone:** calm and dense, like an engineering console. Use monospace for ids and offsets, and keep red and green for correctness only.
 
@@ -176,42 +176,42 @@ The stack is TypeScript end to end: a dependency-free engine package, a Vite + R
 ```
 packages/engine/        # dependency-free engine: types, stores, worker, scheduler, workload, invariants
 packages/oracle/        # independent oracle; must not import @eob/engine
-apps/torture/           # Node torture CLI
-results/torture.md
-apps/web/               # Vite + React UI; torture runs in a Web Worker
+apps/crash-test/           # Node crash-test CLI
+results/crash-test.md
+apps/web/               # Vite + React UI; the crash test runs in a Web Worker
 docs/RATIONALE.md       # written design doc for submission
 ```
 
 - **Tooling:** pnpm workspaces, TypeScript strict mode, vitest, and ESLint with a rule banning `Math.random` and `Date.now` in `packages/engine`.
 - **UI libraries:** plain React with CSS modules or Tailwind. Skip chart libraries, since the lanes and tables are simple SVG and DOM.
 - **Determinism check in CI:** run the same seed twice and require byte-identical event traces.
-- **Deploy:** Vercel or Cloudflare Pages from `apps/web`, or GitHub Pages through an Action. A GitHub Action runs tests plus `torture --seeds 200` on every push. The README shows a CI badge and the torture results table.
+- **Deploy:** Vercel or Cloudflare Pages from `apps/web`, or GitHub Pages through an Action. A GitHub Action runs tests plus `crash-test --seeds 200` on every push. The README shows a CI badge and the crash-test results table.
 
 ## Build milestones
 
-The build is six milestones totaling about 6 hours. The cut line is after M3: if time runs short, ship the engine, the torture results and a minimal UI (scenario picker, ledger diff, crash buttons) rather than a polished UI with no proof behind it.
+The build is six milestones totaling about 6 hours. The cut line is after M3: if time runs short, ship the engine, the crash-test results and a minimal UI (scenario picker, ledger diff, crash buttons) rather than a polished UI with no proof behind it.
 
 | # | Milestone | Budget | Done when |
 | --- | --- | --- | --- |
 | M0 | Scaffold the repo, tooling and CI; add PLAN.md | 15 min | `pnpm test` runs green on an empty suite |
 | M1 | Types, in-memory stores, the worker protocol, recovery and crash points | 90 min | Unit tests pass for every crash point with safeguards on |
 | M2 | Seeded scheduler, Platform restarts, workload generator, oracle and invariants | 60 min | The same seed gives an identical trace twice; ledger == oracle with no crashes |
-| M3 | Safeguard toggles and the torture CLI | 45 min | All on: 0 failures across 2,000 seeds. Every toggle: fails |
-| M4 | Web UI: lanes, pipeline strip, ledger diff, toggles, guided scenarios, torture in a Web Worker | 120 min | All 7 scenarios behave as described in Demo UI |
+| M3 | Safeguard toggles and the crash-test CLI | 45 min | All on: 0 failures across 2,000 seeds. Every toggle: fails |
+| M4 | Web UI: lanes, pipeline strip, ledger diff, toggles, guided scenarios, crash test in a Web Worker | 120 min | All 7 scenarios behave as described in Demo UI |
 | M5 | Deploy, README, RATIONALE.md, record the video | 45 min | The public URL works in a fresh incognito window |
 
 Prompts for Claude Code (start each in plan mode and review the plan before accepting):
 
 - **M1:** "Read PLAN.md. Implement packages/engine types, store interfaces and in-memory stores, and the worker batch protocol exactly as in Batch protocol, with named crash points that throw a CrashSignal. Write the vitest cases for each crash point first, then the code. No randomness or wall clock in the engine."
 - **M2:** "Add the seeded scheduler, Platform restarts with epoch bump, the workload generator with the defaults in PLAN.md, the oracle (it must not import worker code) and invariants I1–I4. Add a determinism test."
-- **M3:** "Add the Safeguards config and implement each toggle as a minimal deviation in the worker. Build the torture CLI. Each toggle must fail at least one seed; if one doesn't, tell me why before changing anything."
+- **M3:** "Add the Safeguards config and implement each toggle as a minimal deviation in the worker. Build the crash-test CLI. Each toggle must fail at least one seed; if one doesn't, tell me why before changing anything."
 - **M4:** "Build apps/web per the Demo UI section. Start with the ledger diff and the pipeline strip, then the lanes, then the guided scenarios."
 
 Judgment checkpoints to keep in the transcript (this is what the reviewers grade):
 
 - Reject any suggestion to add Kafka, Flink or a backend.
 - Check that the oracle is truly independent of the engine.
-- Confirm that every toggle actually fails the torture test.
+- Confirm that every toggle actually fails the crash test.
 - Read the replay code path line by line yourself.
 
 ## Out of scope
@@ -221,14 +221,14 @@ These are deliberately out of scope. Each one becomes a paragraph under "With mo
 - **Rebalancing and zombie fencing.** We use static assignment plus restart. With rebalancing, the epoch would become a fencing token checked on every sink CAS.
 - **Repartitioning.** Drain, then a full reshard of the dedup state (hash by the new P).
 - **Late events after an invoice is issued.** Post them as adjustment lines on the next invoice rather than mutating a closed bucket.
-- **Real infrastructure.** A SQLite-backed store with kill -9 torture is the first stretch goal. Kafka and a database sink would come after that.
+- **Real infrastructure.** A SQLite-backed store with kill -9 crash testing is the first stretch goal. Kafka and a database sink would come after that.
 - **The send→delivery join.** Price lookup at send time, joined to delivery.
 
 ## Submission checklist
 
 - [ ] Public prototype URL (works in incognito, no login)
-- [ ] GitHub repo with README: one-paragraph pitch, how to run, torture results table
+- [ ] GitHub repo with README: one-paragraph pitch, how to run, crash-test results table
 - [ ] RATIONALE.md: theme choice, why this is non-obvious, the 4 rules, the decisions table, tradeoffs, extensions, time spent
-- [ ] Video (~5 min): 30s story → scenarios 2, 3, 5 live → torture table → what's next
+- [ ] Video (~5 min): 30s story → scenarios 2, 3, 5 live → crash-test table → what's next
 - [ ] Claude transcripts: this planning chat plus the Claude Code sessions
 - [ ] Reply to Michelle with a submission date

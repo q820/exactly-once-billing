@@ -4,7 +4,7 @@ import { Controller } from "./controller.js";
 import { elapsed } from "./format.js";
 import { Inspector, LedgerPanel, Lanes, Narration, PipelineStrip, SafeguardsPanel } from "./panels.js";
 import { SCENARIOS, type RunSpec } from "./scenarios.js";
-import { TorturePanel } from "./TorturePanel.js";
+import { CrashTestPanel } from "./CrashTestPanel.js";
 
 const SPEEDS = [1, 5, 25, 100] as const;
 
@@ -83,7 +83,7 @@ export function App() {
   }, [ctrl, scenario]);
   const lost = status.drained && scenario.spotlight === "lost" ? ctrl.lostMessages() : [];
 
-  const isTorture = scenario.torture === true;
+  const isCrashTest = scenario.crashTest === true;
   const start = ctrl.sim.config.workload.startMs;
   return (
     <div className="app">
@@ -100,7 +100,7 @@ export function App() {
           ))}
         </select>
         <button onClick={() => goScenario((scenarioIdx + 1) % SCENARIOS.length)}>Next scenario →</button>
-        {!isTorture ? (
+        {!isCrashTest ? (
           <>
             <span className="mono muted">seed {ctrl.spec.seed}</span>
             <button className="primary" onClick={() => setPlaying(!playing)} disabled={status.drained}>
@@ -146,7 +146,7 @@ export function App() {
       <section className="scenario">
         <h1>{customLabel ?? scenario.title}</h1>
         <p>{customLabel ? describeSpec(ctrl.spec) : scenario.summary}</p>
-        {!isTorture && !customLabel ? (
+        {!isCrashTest && !customLabel ? (
           <div className="steps">
             {scenario.steps.map((s, i) => (
               <button
@@ -167,11 +167,11 @@ export function App() {
         ) : null}
       </section>
 
-      {isTorture ? (
-        <TorturePanel
+      {isCrashTest ? (
+        <CrashTestPanel
           onReplay={(spec, label) => {
             setScenarioIdx(0);
-            load(spec, 0, `Torture replay: ${label}`);
+            load(spec, 0, `Crash test replay: ${label}`);
           }}
         />
       ) : (

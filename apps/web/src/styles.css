@@ -406,7 +406,7 @@ tr.expand td {
   color: var(--good);
 }
 
-/* Torture */
+/* Crash test */
 .progress {
   position: relative;
   height: 18px;

@@ -1,17 +1,17 @@
 /// <reference lib="webworker" />
 import type { ToggleName } from "@eob/engine";
-import { runTortureSeed, type TortureParams } from "@eob/torture";
+import { runCrashTestSeed, type CrashTestParams } from "@eob/crash-test";
 
-export interface TortureJob {
+export interface CrashTestJob {
   readonly job: number;
   readonly config: number;
   readonly toggles: readonly ToggleName[];
   readonly seeds: readonly number[];
-  readonly params: TortureParams;
+  readonly params: CrashTestParams;
 }
 
-self.onmessage = (e: MessageEvent<TortureJob>) => {
+self.onmessage = (e: MessageEvent<CrashTestJob>) => {
   const { job, config, toggles, seeds, params } = e.data;
-  const summaries = seeds.map((seed) => runTortureSeed(seed, toggles, params));
+  const summaries = seeds.map((seed) => runCrashTestSeed(seed, toggles, params));
   self.postMessage({ job, config, summaries });
 };

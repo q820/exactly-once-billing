@@ -1,5 +1,5 @@
 import { anyCrash, scriptedCrash, type CrashInjector } from "@eob/engine";
-import { runSeed, type SeedResult } from "@eob/torture";
+import { runSeed, type SeedResult } from "@eob/crash-test";
 import type { Outcome, RunSpec } from "./scenarios.js";
 
 export function simOptions(spec: RunSpec, extra?: CrashInjector) {

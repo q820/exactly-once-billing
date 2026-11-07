@@ -8,18 +8,18 @@ import {
   explainFailure,
   formatUsd,
   renderMarkdown,
-  TORTURE_CONFIGS,
+  CRASH_TEST_CONFIGS,
   verdict,
   type ConfigReport,
   type SeedSummary,
-  type TortureConfig,
-  type TortureParams,
-} from "./torture.js";
+  type CrashTestConfig,
+  type CrashTestParams,
+} from "./crashTest.js";
 
-/** pnpm torture -- --seeds 2000 --p 0.05 */
+/** pnpm crash-test -- --seeds 2000 --p 0.05 */
 
 const { values } = parseArgs({
-  // `pnpm torture -- --seeds 10` passes the "--" through; drop it.
+  // `pnpm crash-test -- --seeds 10` passes the "--" through; drop it.
   args: process.argv.slice(2).filter((a, i) => !(i === 0 && a === "--")),
   options: {
     seeds: { type: "string", default: "2000" },
@@ -27,15 +27,15 @@ const { values } = parseArgs({
     threads: { type: "string", default: String(Math.max(1, availableParallelism() - 1)) },
     only: { type: "string" },
     skip: { type: "string" },
-    out: { type: "string", default: "results/torture.md" },
-    json: { type: "string", default: "results/torture.json" },
+    out: { type: "string", default: "results/crash-test.md" },
+    json: { type: "string", default: "results/crash-test.json" },
     messages: { type: "string" },
   },
   allowPositionals: true,
 });
 
 const seeds = Number(values.seeds);
-const params: TortureParams = {
+const params: CrashTestParams = {
   p: Number(values.p),
   ...(values.messages ? { overrides: { workload: { messages: Number(values.messages) } } } : {}),
 };
@@ -43,15 +43,15 @@ const threads = Math.max(1, Number(values.threads));
 const skip = new Set(values.skip?.split(",") ?? []);
 const configs = (
   values.only
-    ? TORTURE_CONFIGS.filter((c) => values.only!.split(",").includes(c.name) || (values.only === "on" && !c.toggles.length))
-    : TORTURE_CONFIGS
+    ? CRASH_TEST_CONFIGS.filter((c) => values.only!.split(",").includes(c.name) || (values.only === "on" && !c.toggles.length))
+    : CRASH_TEST_CONFIGS
 ).filter((c) => !skip.has(c.name));
 if (skip.size) console.log(`skipping: ${[...skip].join(", ")}`);
 if (!configs.length) throw new Error(`no config matches --only ${values.only}`);
 
 const repoRoot = resolve(dirname(new URL(import.meta.url).pathname), "../../..");
 
-function runChunk(seedList: number[], config: TortureConfig): Promise<SeedSummary[]> {
+function runChunk(seedList: number[], config: CrashTestConfig): Promise<SeedSummary[]> {
   return new Promise((ok, fail) => {
     const w = new Worker(new URL("./thread.ts", import.meta.url), {
       workerData: { seeds: seedList, toggles: config.toggles, params },
@@ -61,7 +61,7 @@ function runChunk(seedList: number[], config: TortureConfig): Promise<SeedSummar
   });
 }
 
-async function runConfig(config: TortureConfig): Promise<ConfigReport> {
+async function runConfig(config: CrashTestConfig): Promise<ConfigReport> {
   const t0 = performance.now();
   const all = Array.from({ length: seeds }, (_, i) => i + 1);
   const n = Math.min(threads, seeds);
@@ -73,7 +73,7 @@ async function runConfig(config: TortureConfig): Promise<ConfigReport> {
 }
 
 const reports: ConfigReport[] = [];
-console.log(`torture: ${seeds} seeds x ${configs.length} configs, p=${params.p}, ${threads} threads\n`);
+console.log(`crash-test: ${seeds} seeds x ${configs.length} configs, p=${params.p}, ${threads} threads\n`);
 for (const config of configs) {
   const r = await runConfig(config);
   reports.push(r);
@@ -86,7 +86,7 @@ for (const config of configs) {
   if (r.firstFailure) console.log(`     first failing seed ${r.firstFailure.seed}: ${r.firstFailure.reason}`);
 }
 
-const command = `pnpm torture -- --seeds ${seeds} --p ${params.p}${values.messages ? ` --messages ${values.messages}` : ""}`;
+const command = `pnpm crash-test -- --seeds ${seeds} --p ${params.p}${values.messages ? ` --messages ${values.messages}` : ""}`;
 for (const [file, body] of [
   [values.out!, renderMarkdown(reports, { p: params.p, command })],
   [values.json!, JSON.stringify({ seeds, p: params.p, reports }, null, 2)],
