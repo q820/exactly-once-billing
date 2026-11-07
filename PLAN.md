@@ -98,7 +98,7 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
 | `atMostOnce`: commit before processing | Crash at C1–C3a | Under-billed. The batch is skipped on restart (at C3 every sink row is already written, so nothing is lost) | Why committing before processing loses revenue |
-| `noDedupStore`: at-least-once only | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
+| `noDedupStore`: no dedup, every copy is billed | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
 | `dedupIgnoresBatchId`: any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
 | `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
 | `atLeastOnce`: add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
@@ -197,7 +197,7 @@ The build is six milestones totaling about 6 hours. The cut line is after M3: if
 | M1 | Types, in-memory stores, the worker protocol, recovery and crash points | 90 min | Unit tests pass for every crash point with safeguards on |
 | M2 | Seeded scheduler, Platform restarts, workload generator, oracle and invariants | 60 min | The same seed gives an identical trace twice; ledger == oracle with no crashes |
 | M3 | Safeguard toggles and the crash-test CLI | 45 min | All on: 0 failures across 2,000 seeds. Every toggle: fails |
-| M4 | Web UI: lanes, pipeline strip, ledger diff, toggles, guided scenarios, crash test in a Web Worker | 120 min | All 7 scenarios behave as described in Demo UI |
+| M4 | Web UI: lanes, pipeline strip, ledger diff, toggles, guided scenarios, crash test in a Web Worker | 120 min | All guided scenarios behave as described in Demo UI |
 | M5 | Deploy, README, RATIONALE.md, record the video | 45 min | The public URL works in a fresh incognito window |
 
 Prompts for Claude Code (start each in plan mode and review the plan before accepting):

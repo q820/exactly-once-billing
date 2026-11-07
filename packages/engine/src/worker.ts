@@ -106,7 +106,7 @@ export function filterBatch(
       continue;
     }
     if (!useDedup) {
-      kept.push(rec); // break-it: at-least-once only
+      kept.push(rec); // break-it: no dedup, every copy is billed
       continue;
     }
     const entry = dedupGet(rec.messageId);
