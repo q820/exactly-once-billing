@@ -14,9 +14,9 @@ export interface WorkloadConfig {
   readonly multiDeviceRate: number;
   /** Share of messages with one infra retry (an identical re-append). */
   readonly infraRetryRate: number;
-  /** Share delivered 1-30 days before they are appended (phones coming online late). */
+  /** Share delivered 1-29 days before they are appended (phones coming online late). */
   readonly lateRate: number;
-  /** Share sent more than 35 days before they are appended (go to the DropLog). */
+  /** Share sent more than 30 days before they are appended (go to the DropLog). */
   readonly pastRetentionRate: number;
   /** How far after the first copy other copies are appended. */
   readonly copySpreadMs: number;
@@ -81,7 +81,7 @@ export function generateWorkload(seed: number, config: WorkloadConfig = DEFAULT_
       sentAt = appendedAt - RETENTION_MS - rng.int(MINUTE_MS, 5 * DAY_MS);
       deliveredAt = sentAt + rng.int(1_000, 10 * DAY_MS);
     } else if (kind === "late") {
-      deliveredAt = appendedAt - rng.int(DAY_MS, 30 * DAY_MS);
+      deliveredAt = appendedAt - rng.int(DAY_MS, 29 * DAY_MS);
       sentAt = deliveredAt - rng.int(1_000, 60_000);
     } else {
       deliveredAt = appendedAt - rng.int(0, 30_000);

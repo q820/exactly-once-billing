@@ -13,7 +13,7 @@
       "violations": 0,
       "dropMismatches": 0,
       "firstFailure": null,
-      "ms": 13862.529375
+      "ms": 11710.939587
     },
     {
       "name": "commitFirst",
@@ -23,8 +23,8 @@
       "seeds": 2000,
       "failed": 2000,
       "crashes": 613411,
-      "overMicros": 251000,
-      "underMicros": 16778177000,
+      "overMicros": 241500,
+      "underMicros": 16778167500,
       "violations": 0,
       "dropMismatches": 1209,
       "firstFailure": {
@@ -47,7 +47,7 @@
         ],
         "mismatchedRows": 268
       },
-      "ms": 11545.429982999998
+      "ms": 10328.045301000002
     },
     {
       "name": "noDedupStore",
@@ -79,9 +79,9 @@
           "1790813122883 P1 CRASH C2 (1,5) replay restartAt=1790813150709",
           "1790813151359 P1 CRASH C3a (3,6) restartAt=1790813159160"
         ],
-        "mismatchedRows": 281
+        "mismatchedRows": 282
       },
-      "ms": 9224.050024999997
+      "ms": 8268.060191
     },
     {
       "name": "dedupIgnoresBatchId",
@@ -115,7 +115,7 @@
         ],
         "mismatchedRows": 221
       },
-      "ms": 12291.564084999998
+      "ms": 10996.407568999999
     },
     {
       "name": "nondeterministicBatches",
@@ -149,7 +149,7 @@
         ],
         "mismatchedRows": 11
       },
-      "ms": 12183.641056
+      "ms": 10817.710288000002
     },
     {
       "name": "blindUpsert",
@@ -183,7 +183,7 @@
         ],
         "mismatchedRows": 196
       },
-      "ms": 12682.924278000006
+      "ms": 10755.570454
     },
     {
       "name": "restampReplay",
@@ -217,22 +217,7 @@
         ],
         "mismatchedRows": 221
       },
-      "ms": 13232.58726
-    },
-    {
-      "name": "processingClock",
-      "toggles": [
-        "processingClock"
-      ],
-      "seeds": 2000,
-      "failed": 0,
-      "crashes": 746507,
-      "overMicros": 0,
-      "underMicros": 0,
-      "violations": 0,
-      "dropMismatches": 0,
-      "firstFailure": null,
-      "ms": 13293.002158999996
+      "ms": 10912.804156999999
     }
   ]
 }

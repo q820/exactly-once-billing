@@ -231,7 +231,6 @@ export class Simulation {
       maxBatch: this.config.maxBatch,
       crash: this.crash,
       stepOrder: this.config.stepOrder,
-      clock: this.clock,
       random: this.workerRng.next,
     });
   }

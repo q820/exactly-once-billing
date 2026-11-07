@@ -29,8 +29,8 @@ These are settled. Claude Code should not reopen them without asking.
 | Framework | Our own micro-batch engine in TypeScript (no Kafka, no Flink) | The contribution is the protocol, which is framework-agnostic. The closest real-world model is Spark Structured Streaming (an offset log plus batchId-idempotent sinks) |
 | Partitioning | Fixed, generous count (default 8 in the demo), partition = hash(messageId) % P | All copies of a message land on one partition, so dedup is partition-local. A fixed count means no repartitioning |
 | Worker failure | Static assignment. A dead worker's partitions lag until the platform restarts it, then it resumes from its own batch log | Billing tolerates delay, not error. No rebalancing means no zombie writers |
-| Dedup retention | Flat 35-day TTL on the dedup store | WhatsApp commits to delivery within 30 days, so the 5-day margin guarantees no double-billing inside the promise |
-| Past retention | If appendedAt − sentAt > 35 days: log and drop, never bill | Rare. Billing it would risk a double-bill, and a surprise line on next month's invoice confuses businesses |
+| Dedup retention | Flat 30-day TTL on the dedup store | WhatsApp commits to delivery within 30 days; one number for the TTL and the drop rule |
+| Past retention | If appendedAt − sentAt > 30 days: log and drop, never bill | Rare. Billing it would risk a double-bill, and a surprise line on next month's invoice confuses businesses |
 | Sink key | paymentAccount × sku × halfHour(deliveredAt) × partition. Invoices sum across partitions | One writer per row, so no read-modify-write contention between partitions |
 | Money | Integer micros (bigint or safe integers), never floats | Totals stay exact |
 
@@ -63,7 +63,7 @@ Exactly-once means at-least-once plus idempotency. Every step is safe to repeat,
 1. **Plan.** `writePlan({id: {epoch, idx: lastIdx + 1}, startOffset: committedEnd + 1, endOffset: min(logEnd, start + maxBatch − 1)})`. The batch range is now fixed forever. → **C1**
 2. **Read** exactly `[startOffset, endOffset]`, never "whatever is available now".
 3. **Filter**, in log order:
-    - If `appendedAt − sentAt > 35 days`, append to the DropLog and skip.
+    - If `appendedAt − sentAt > 30 days`, append to the DropLog and skip.
     - If the dedup entry exists and `entry.id < current id`, it's a true duplicate: skip.
     - If the dedup entry exists and `entry.id == current id`, it's our own earlier attempt at this batch: keep it.
     - If messageId was already kept earlier in this batch (in-memory set), it's a duplicate within the batch: skip.
@@ -103,9 +103,8 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 | `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
 | `blindUpsert`: add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
 | `restampReplay`: replay uses the new epoch | Crash at C2 or C3a | Under-billed. Entries from the first attempt now look older than the replay, so they're treated as duplicates | Why a replay keeps its planned BatchId |
-| `processingClock`: retention is checked against the worker clock | A copy near the 35-day edge plus a crash with a long restart delay | Ledger diverges from the oracle | Why decisions inside a batch use only record time |
 
-The last two toggles are stretch goals. Each guided scenario in the UI pairs one toggle with the crash point that exposes it, so the reviewer sees the failure on the first try.
+`restampReplay` is a stretch goal (`processingClock` was cut: retention uses only record fields, so the toggle was a strawman). Each guided scenario in the UI pairs one toggle with the crash point that exposes it, so the reviewer sees the failure on the first try.
 
 ## Simulation and verification
 
@@ -123,8 +122,8 @@ The whole run is a pure function of (seed, config, safeguards). Any failure the 
 - About 20 accounts × 3 SKUs, with prices from a fixed table per SKU.
 - About 5,000 unique messages over 2 sim-hours of append time, with deliveredAt spread across those hours.
 - Duplicates: 15% of messages are delivered to 2–3 devices; 3% get an infra retry. Copies are spread across different appended positions, so some land in the same batch and some in later ones.
-- Late events: 5% have deliveredAt 1–30 days before appendedAt, from phones coming online late, so they land in old buckets.
-- Past retention: 0.3% have sentAt more than 35 days before appendedAt. These go to the DropLog.
+- Late events: 5% have deliveredAt 1–29 days before appendedAt, from phones coming online late, so they land in old buckets.
+- Past retention: 0.3% have sentAt more than 30 days before appendedAt. These go to the DropLog.
 - For the demo, the sim compresses "days" by setting timestamps directly, not by running the clock for days. TTL expiry is checked by a `now` comparison.
 
 ### Oracle (independent of the engine, about 30 lines)
@@ -151,7 +150,7 @@ Layout, top to bottom:
 - **Partition lanes (8 rows):** a log bar showing committed, planned and log-end offsets; the worker state (running / crashed / restarting in Ns) and its epoch; and the current batch id.
 - **Pipeline strip** for the selected partition: the 7 steps as boxes, with a ⚡ button in each gap (C1–C4, C2a, C3a). Clicking ⚡ arms a crash for the next time the worker reaches that point. The active step is highlighted, and a replay is labeled as one.
 - **Ledger panel:** rows of account × sku × half-hour, showing the engine total, the oracle total and the difference. Rows touched by late events get a "late" badge. The table can be filtered to only mismatched rows.
-- **Safeguards panel:** the 7 toggles, each with a one-line description. A toggle that's off turns its label red.
+- **Safeguards panel:** the 6 toggles, each with a one-line description. A toggle that's off turns its label red.
 - **Event inspector,** opened by clicking a messageId: all of its copies (device, offset, batch), its dedup entry, the sink row it billed, or why it was skipped or dropped.
 - **Narration log:** plain-English lines, e.g. "P3 crashed at C2 during batch (2,7). Restarted as epoch 3. Replaying (2,7) from offsets 300–399."
 
@@ -162,7 +161,7 @@ Guided scenarios (each pins a seed, armed crashes and toggles):
 3. **Crash after dedup, before sink:** safeguards on, crash at C2. Green. Then flip dedupIgnoresBatchId and replay. Red, under-billed.
 4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
 5. **Crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip blindUpsert. Red, over-billed.
-6. **The phone that came back:** one message delivered 3 weeks late lands in an old bucket. A copy past 35 days lands in the DropLog.
+6. **The phone that came back:** one message delivered 3 weeks late lands in an old bucket. A copy past 30 days lands in the DropLog.
 7. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
 
 **Visual tone:** calm and dense, like an engineering console. Use monospace for ids and offsets, and keep red and green for correctness only.

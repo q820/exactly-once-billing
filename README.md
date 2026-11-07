@@ -14,7 +14,7 @@ Requires Node 24 and pnpm 10.
 ```sh
 pnpm install
 pnpm dev                                  # the demo UI at http://localhost:5173
-pnpm check                                # typecheck + lint + 130 tests
+pnpm check                                # typecheck + lint + 128 tests
 pnpm crash-test -- --seeds 2000 --p 0.05     # writes results/crash-test.md and .json
 pnpm build                                # static site in apps/web/dist
 ```
@@ -28,15 +28,12 @@ pnpm build                                # static site in apps/web/dist
 | Config | Failed seeds | Over-billed | Under-billed | Crashes injected |
 | --- | ---: | ---: | ---: | ---: |
 | all safeguards on | 0 / 2000 | $0.00 | $0.00 | 746,507 |
-| `commitFirst` | 2000 / 2000 | $0.25 | $16,778.18 | 613,411 |
+| `commitFirst` | 2000 / 2000 | $0.24 | $16,778.17 | 613,411 |
 | `noDedupStore` | 2000 / 2000 | $27,536.39 | $0.00 | 764,192 |
 | `dedupIgnoresBatchId` | 2000 / 2000 | $0.00 | $10,547.52 | 711,446 |
 | `nondeterministicBatches` | 2000 / 2000 | $0.00 | $489.88 | 636,117 |
 | `blindUpsert` | 2000 / 2000 | $8,386.32 | $0.00 | 746,507 |
 | `restampReplay` | 2000 / 2000 | $0.00 | $10,547.52 | 711,446 |
-| `processingClock` | 0 / 2000 | $0.00 | $0.00 | 746,507 |
-
-`processingClock` cannot fail on the default workload: no copy sits near the 35-day retention edge (see RATIONALE, "Open findings").
 
 ## Layout
 

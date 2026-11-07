@@ -150,7 +150,7 @@ export const SCENARIOS: readonly Scenario[] = [
     id: "phone",
     title: "6. The phone that came back",
     summary:
-      "A delivery from a phone that was offline for about three weeks lands in its three-week-old bucket through the normal path. A message sent more than 35 days before it was appended goes to the DropLog instead of the bill.",
+      "A delivery from a phone that was offline for about three weeks lands in its three-week-old bucket through the normal path. A message sent more than 30 days before it was appended goes to the DropLog instead of the bill.",
     steps: [
       {
         label: "Run",

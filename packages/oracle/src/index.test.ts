@@ -32,7 +32,7 @@ describe("oracle", () => {
   });
 
   it("drops past-retention copies without letting them claim the message", () => {
-    const old = T - 35 * DAY - 1;
+    const old = T - 30 * DAY - 1;
     const r = computeExpected([
       e("m1", { sentAt: old, deliveredAt: old + 5 }), // past retention: dropped
       e("m1", { sentAt: old, deliveredAt: old + 5, deviceId: "d2" }), // also past retention
@@ -41,8 +41,8 @@ describe("oracle", () => {
     expect(r.drops.size).toBe(2);
   });
 
-  it("keeps an event exactly at the 35-day edge", () => {
-    const r = computeExpected([e("m1", { sentAt: T + 2 - 35 * DAY })]);
+  it("keeps an event exactly at the 30-day edge", () => {
+    const r = computeExpected([e("m1", { sentAt: T + 2 - 30 * DAY })]);
     expect(r.drops.size).toBe(0);
     expect(r.totals.size).toBe(1);
   });

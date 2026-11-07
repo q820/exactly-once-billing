@@ -66,7 +66,7 @@ describe("DedupStore", () => {
     expect(dedup.get("m1")?.id).toEqual(id(1, 1));
   });
 
-  it("expire removes entries older than the 35-day TTL", () => {
+  it("expire removes entries older than the 30-day TTL", () => {
     const dedup = createMemoryStores(1).dedup[0]!;
     dedup.putIfAbsent("old", { id: id(1, 1), seenAt: 0 });
     dedup.putIfAbsent("new", { id: id(1, 1), seenAt: 10 * DAY_MS });

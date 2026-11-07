@@ -122,32 +122,25 @@ describe("restampReplay: the replay takes the new epoch", () => {
   });
 });
 
-describe("processingClock: retention checked against the worker clock", () => {
+describe("retention is decided from record fields only", () => {
   const DAY = 86_400_000;
   const T = 1_000 * DAY;
-  // Sent 35 days minus 30 s before it was appended: inside retention by record time.
-  const nearEdge: DeliveryEvent = {
-    messageId: "edge",
+  const at = (messageId: string, sentAt: number): DeliveryEvent => ({
+    messageId,
     deviceId: "d1",
     account: "A",
     sku: "marketing",
     priceMicros: MARKETING,
-    sentAt: T - 35 * DAY + 30_000,
-    deliveredAt: T - 34 * DAY,
+    sentAt,
+    deliveredAt: sentAt + DAY,
     appendedAt: T,
-  };
-
-  it("processed 60 s after append (e.g. after a restart delay): dropped by the clock -> diverges from the oracle", () => {
-    const stores = fixtureStores([nearEdge]);
-    drain(stores, { safeguards: breakIt("processingClock"), clock: { now: () => T + 60_000 } });
-    expect(stores.ledger.rows()).toEqual([]);
-    expect(stores.drops.all()).toHaveLength(1);
   });
 
-  it("with record time, the same event is billed no matter when it is processed", () => {
-    const stores = fixtureStores([nearEdge]);
-    drain(stores, { clock: { now: () => T + 60 * DAY } });
+  it("bills a copy exactly at the 30-day edge and drops one 1 ms past it", () => {
+    const stores = fixtureStores([at("edge", T - 30 * DAY), at("past", T - 30 * DAY - 1)]);
+    drain(stores);
     expect(Object.values(totals(stores.ledger))).toEqual([MARKETING]);
+    expect(stores.drops.all().map((d) => d.messageId)).toEqual(["past"]);
   });
 });
 

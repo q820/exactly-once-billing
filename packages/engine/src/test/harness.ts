@@ -1,7 +1,7 @@
 import { CrashSignal, noCrashes, type CrashInjector } from "../crash.js";
 import { createMemoryStores } from "../stores/memory.js";
 import type { Safeguards } from "../safeguards.js";
-import type { Clock, Ledger, Stores } from "../stores/types.js";
+import type { Ledger, Stores } from "../stores/types.js";
 import type { DeliveryEvent } from "../types.js";
 import { Worker, type StepOrder, type StepResult } from "../worker.js";
 import { FIXTURE_EVENTS, MAX_BATCH } from "./fixture.js";
@@ -30,7 +30,6 @@ export function drain(
     maxBatch?: number;
     safeguards?: Partial<Safeguards>;
     random?: () => number;
-    clock?: Clock;
   } = {},
 ): DrainResult {
   const make = () =>
@@ -42,7 +41,6 @@ export function drain(
       stepOrder: opts.stepOrder ?? "dedupThenSink",
       ...(opts.safeguards ? { safeguards: opts.safeguards } : {}),
       ...(opts.random ? { random: opts.random } : {}),
-      ...(opts.clock ? { clock: opts.clock } : {}),
     });
   const trace: StepResult[] = [];
   const crashes: CrashSignal[] = [];

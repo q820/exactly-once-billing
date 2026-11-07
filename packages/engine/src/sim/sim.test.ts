@@ -77,7 +77,7 @@ describe("workload generator (defaults)", () => {
     expect(count("pastRetention")).toBeLessThan(35);
   });
 
-  it("puts late events 1-30 days back and past-retention beyond 35 days", () => {
+  it("puts late events 1-29 days back and past-retention beyond 30 days", () => {
     for (const e of w.events) {
       const kind = w.kindOf.get(e.messageId);
       if (kind === "late") {

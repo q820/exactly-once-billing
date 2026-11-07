@@ -5,13 +5,12 @@
 | Config | Seeds | Failed seeds | Over-billed | Under-billed | Invariant violations | Crashes injected | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | all safeguards on | 2000 | 0 (0%) | $0.00 | $0.00 | 0 | 746,507 | pass |
-| `commitFirst` | 2000 | 2000 (100%) | $0.25 | $16,778.18 | 0 | 613,411 | pass |
+| `commitFirst` | 2000 | 2000 (100%) | $0.24 | $16,778.17 | 0 | 613,411 | pass |
 | `noDedupStore` | 2000 | 2000 (100%) | $27,536.39 | $0.00 | 0 | 764,192 | pass |
 | `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `nondeterministicBatches` | 2000 | 2000 (100%) | $0.00 | $489.88 | 0 | 636,117 | pass |
 | `blindUpsert` | 2000 | 2000 (100%) | $8,386.32 | $0.00 | 0 | 746,507 | pass |
 | `restampReplay` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
-| `processingClock` | 2000 | 0 (0%) | $0.00 | $0.00 | 0 | 746,507 | FAIL |
 
 Verdict: "all safeguards on" passes with 0 failed seeds; each break-it toggle passes when it fails at least one seed.
 
@@ -39,7 +38,7 @@ under-billed $9.03; DropLog != oracle drops; 268 ledger rows differ; 296 crashes
 
 ### `noDedupStore`: seed 1
 
-over-billed $13.20; 281 ledger rows differ; 375 crashes in the run.
+over-billed $13.20; 282 ledger rows differ; 375 crashes in the run.
 
 ```
 1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526

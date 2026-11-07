@@ -16,8 +16,6 @@ export interface Safeguards {
   readonly casSink: boolean;
   /** A replay keeps its planned BatchId instead of taking the new epoch. */
   readonly replayKeepsBatchId: boolean;
-  /** Retention is decided from record time (appendedAt), not the processing clock. */
-  readonly recordTimeDecisions: boolean;
 }
 
 export const ALL_SAFEGUARDS: Safeguards = {
@@ -27,7 +25,6 @@ export const ALL_SAFEGUARDS: Safeguards = {
   deterministicBatches: true,
   casSink: true,
   replayKeepsBatchId: true,
-  recordTimeDecisions: true,
 };
 
 export type ToggleName =
@@ -36,8 +33,7 @@ export type ToggleName =
   | "dedupIgnoresBatchId"
   | "nondeterministicBatches"
   | "blindUpsert"
-  | "restampReplay"
-  | "processingClock";
+  | "restampReplay";
 
 export interface ToggleInfo {
   readonly name: ToggleName;
@@ -97,14 +93,6 @@ export const TOGGLES: readonly ToggleInfo[] = [
     exposedBy: "Crash at C2 or C3a",
     result: "under",
     teaches: "Why a replay keeps its planned BatchId",
-  },
-  {
-    name: "processingClock",
-    safeguard: "recordTimeDecisions",
-    description: "Retention is checked against the worker's clock",
-    exposedBy: "A copy near the 35-day edge plus a crash with a long restart delay",
-    result: "diverges",
-    teaches: "Why decisions inside a batch use only record time",
   },
 ];
 

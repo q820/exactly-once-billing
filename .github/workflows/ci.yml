@@ -18,6 +18,4 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
-      # processingClock is skipped until the near-35-day-edge workload decision is made
-      # (the default workload has no copy near the edge, so that toggle can't fail yet).
-      - run: pnpm crash-test -- --seeds 200 --p 0.05 --skip processingClock --out results/ci-crash-test.md --json results/ci-crash-test.json
+      - run: pnpm crash-test -- --seeds 200 --p 0.05 --out results/ci-crash-test.md --json results/ci-crash-test.json

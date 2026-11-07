@@ -23,7 +23,7 @@ export interface OracleResult {
   readonly drops: ReadonlySet<string>;
 }
 
-const RETENTION_MS = 35 * 24 * 60 * 60 * 1000;
+const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const HALF_HOUR_MS = 30 * 60 * 1000;
 
 export const eventKey = (e: OracleEvent) => `${e.messageId}|${e.deviceId}|${e.appendedAt}`;

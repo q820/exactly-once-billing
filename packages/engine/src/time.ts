@@ -5,7 +5,7 @@ export const HALF_HOUR_MS = 30 * MINUTE_MS;
 export const DAY_MS = 24 * 60 * MINUTE_MS;
 
 /** Dedup TTL and past-retention cutoff (PLAN.md, locked decisions). */
-export const RETENTION_MS = 35 * DAY_MS;
+export const RETENTION_MS = 30 * DAY_MS;
 
 export function halfHour(t: Millis): number {
   return Math.floor(t / HALF_HOUR_MS);

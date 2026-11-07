@@ -1,9 +1,9 @@
 import { compareBatchId, formatBatchId } from "./batchId.js";
 import { InvariantViolation } from "./invariants.js";
 import { CrashSignal, noCrashes, type CrashInjector, type CrashPoint } from "./crash.js";
-import type { BatchLog, Clock, DedupStore, Stores } from "./stores/types.js";
+import type { BatchLog, DedupStore, Stores } from "./stores/types.js";
 import { ALL_SAFEGUARDS, type Safeguards } from "./safeguards.js";
-import { halfHour, isPastRetention, RETENTION_MS } from "./time.js";
+import { halfHour, isPastRetention } from "./time.js";
 import type { BatchId, BatchPlan, Commit, DedupEntry, LogRecord, Micros, SinkKey } from "./types.js";
 
 /**
@@ -26,11 +26,6 @@ export interface WorkerOptions {
   readonly crash?: CrashInjector;
   /** Dedup and sink writes are interchangeable; only plan-first and commit-last are load-bearing. */
   readonly stepOrder?: StepOrder;
-  /**
-   * The processing clock. A correct worker never reads it inside a batch; it
-   * exists for the `processingClock` break-it toggle.
-   */
-  readonly clock?: Clock;
   /** All on by default. Each break-it toggle turns one off. */
   readonly safeguards?: Partial<Safeguards>;
   /**
@@ -76,8 +71,6 @@ export interface FilterOptions {
   readonly useDedup?: boolean;
   /** Safeguard `dedupChecksBatchId`. Off: any existing entry counts as a duplicate. */
   readonly checkBatchId?: boolean;
-  /** Set only when safeguard `recordTimeDecisions` is off: retention measured from this processing time. */
-  readonly processingNow?: number;
 }
 
 export interface FilterResult {
@@ -103,16 +96,12 @@ export function filterBatch(
 ): FilterResult {
   const useDedup = opts.useDedup ?? true;
   const checkBatchId = opts.checkBatchId ?? true;
-  const pastRetention =
-    opts.processingNow === undefined
-      ? isPastRetention
-      : (rec: LogRecord) => opts.processingNow! - rec.sentAt > RETENTION_MS; // break-it: processing clock
   const kept: LogRecord[] = [];
   const duplicates: LogRecord[] = [];
   const dropped: LogRecord[] = [];
   const keptInBatch = new Set<string>();
   for (const rec of records) {
-    if (pastRetention(rec)) {
+    if (isPastRetention(rec)) {
       dropped.push(rec);
       continue;
     }
@@ -180,7 +169,6 @@ export class Worker {
   private readonly crash: CrashInjector;
   private readonly afterFilter: readonly Phase[];
   private readonly sg: Safeguards;
-  private readonly clock: Clock | undefined;
   private readonly random: (() => number) | undefined;
 
   // Memory only: discarded with the Worker on a crash.
@@ -201,9 +189,7 @@ export class Worker {
     this.crash = opts.crash ?? noCrashes;
     this.afterFilter = AFTER_FILTER[opts.stepOrder ?? "dedupThenSink"];
     this.sg = { ...ALL_SAFEGUARDS, ...opts.safeguards };
-    this.clock = opts.clock;
     this.random = opts.random;
-    if (!this.sg.recordTimeDecisions && !this.clock) throw new Error("processingClock toggle needs a clock");
     if (!this.sg.deterministicBatches && !this.random) throw new Error("nondeterministicBatches toggle needs randomness");
   }
 
@@ -302,7 +288,6 @@ export class Worker {
     const { kept, duplicates, dropped } = filterBatch(this.records, plan.id, (m) => this.dedup.get(m), {
       useDedup: this.sg.dedupStore,
       checkBatchId: this.sg.dedupChecksBatchId,
-      ...(this.sg.recordTimeDecisions ? {} : { processingNow: this.clock!.now() }),
     });
     for (const rec of dropped) {
       this.stores.drops.record({
@@ -371,7 +356,7 @@ export class Worker {
    * Then expire dedup entries against this batch's record-time watermark (its
    * largest appendedAt), never the processing clock. appendedAt is non-decreasing
    * in log order, so any later copy of an expired message has
-   * appendedAt - sentAt > 35 days and is dropped as past-retention anyway.
+   * appendedAt - sentAt > 30 days and is dropped as past-retention anyway.
    * Expiring only after the commit means a replay never sees fewer entries than
    * its first attempt did.
    */
