@@ -87,6 +87,8 @@ export function App() {
   const lost = status.drained && scenario.spotlight === "lost" ? ctrl.lostMessages() : [];
 
   const isCrashTest = scenario.crashTest === true;
+  /** Guided scenarios and crash-test replays show their settings read-only; only the Sandbox is editable. */
+  const editable = scenario.sandbox === true && customLabel === null;
   const start = ctrl.sim.config.workload.startMs;
   return (
     <div className="app">
@@ -102,21 +104,11 @@ export function App() {
             </option>
           ))}
         </select>
-        <button onClick={() => goScenario((scenarioIdx + 1) % SCENARIOS.length)}>Next scenario →</button>
         {!isCrashTest ? (
           <>
             <span className="mono muted">seed {ctrl.spec.seed}</span>
             <button className="primary" onClick={() => setPlaying(!playing)} disabled={status.drained}>
               {playing ? "Pause" : "Play"}
-            </button>
-            <button
-              onClick={() => {
-                ctrl.advance(1);
-                rerender();
-              }}
-              disabled={status.drained}
-            >
-              Step
             </button>
             <button
               onClick={() => {
@@ -138,7 +130,7 @@ export function App() {
               </select>
             </label>
             <button onClick={replaySame} title="Same seed, same crashes, from the start">
-              Replay
+              Restart
             </button>
             <span className="mono muted">sim {elapsed(ctrl.sim.now - start)}</span>
             <span className={`pill ${status.kind}`}>{status.label}</span>
@@ -194,12 +186,12 @@ export function App() {
       ) : (
         <main className="grid">
           <div className="col">
-            <PipelineStrip ctrl={ctrl} partition={selected} onArm={rerender} />
+            <PipelineStrip ctrl={ctrl} partition={selected} editable={editable} onArm={rerender} />
             <Lanes ctrl={ctrl} selected={selected} onSelect={setSelected} />
             <LedgerPanel ctrl={ctrl} status={status} onInspect={setInspect} />
           </div>
           <div className="col side">
-            <SafeguardsPanel safeguards={ctrl.spec.safeguards} onChange={changeSafeguards} />
+            <SafeguardsPanel safeguards={ctrl.spec.safeguards} onChange={editable ? changeSafeguards : null} />
             <Inspector
               ctrl={ctrl}
               messageId={inspect}

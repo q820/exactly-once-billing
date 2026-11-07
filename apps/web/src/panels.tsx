@@ -107,11 +107,24 @@ export const CRASH_POINT_INFO: Record<CrashPoint, { when: string; state: string;
 };
 
 /** Top-level so React keeps the same button across re-renders (keeps hover, focus and clicks while playing). */
-function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; onClick: () => void }) {
+function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; scripted: number[]; onClick: (() => void) | null }) {
   const info = CRASH_POINT_INFO[props.point];
+  const scripted = props.scripted.length > 0;
+  const action = scripted
+    ? `This step crashes P${props.partition} here during batch ${props.scripted.join(", ")}.`
+    : props.onClick === null
+      ? "Open the Sandbox scenario to arm crashes yourself."
+      : props.armed
+        ? `Armed for P${props.partition}: click to disarm.`
+        : `Click to crash P${props.partition} the next time it reaches ${props.point}.`;
   return (
     <span className="bolt-wrap">
-      <button className={`bolt ${props.armed ? "armed" : ""}`} aria-describedby={`tip-${props.point}`} onClick={props.onClick}>
+      <button
+        className={`bolt ${props.armed || scripted ? "armed" : ""} ${props.onClick ? "" : "locked"}`}
+        aria-describedby={`tip-${props.point}`}
+        aria-disabled={props.onClick === null}
+        onClick={props.onClick ?? undefined}
+      >
         ⚡<span className="mono">{props.point}</span>
       </button>
       <span className="tip" role="tooltip" id={`tip-${props.point}`}>
@@ -120,23 +133,34 @@ function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; onC
         </strong>
         <span>{info.state}</span>
         <span>{info.recovery}</span>
-        <span className="tip-action">
-          {props.armed ? `Armed for P${props.partition}: click to disarm.` : `Click to crash P${props.partition} the next time it reaches ${props.point}.`}
-        </span>
+        <span className="tip-action">{action}</span>
       </span>
     </span>
   );
 }
 
-export function PipelineStrip(props: { ctrl: Controller; partition: number; onArm: () => void }) {
+export function PipelineStrip(props: { ctrl: Controller; partition: number; editable: boolean; onArm: () => void }) {
   const { ctrl, partition } = props;
   const lane = ctrl.sim.lane(partition);
   const w = lane.worker;
   const armed = new Set(ctrl.armed.filter((a) => a.partition === partition).map((a) => a.point));
-  const arm = (point: CrashPoint) => {
-    ctrl.arm(partition, point);
-    props.onArm();
-  };
+  const scriptedAt = (point: CrashPoint) => ctrl.spec.crashes.filter((c) => c.partition === partition && c.point === point).map((c) => c.batchIdx);
+  const bolt = (point: CrashPoint) => (
+    <Bolt
+      point={point}
+      partition={partition}
+      armed={armed.has(point)}
+      scripted={scriptedAt(point)}
+      onClick={
+        props.editable
+          ? () => {
+              ctrl.arm(partition, point);
+              props.onArm();
+            }
+          : null
+      }
+    />
+  );
   return (
     <section className="panel pipeline">
       <h2>
@@ -154,15 +178,15 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; onAr
           <div key={s.phase} className="step-wrap">
             <div className={`step ${w?.phase === s.phase ? "next" : ""}`}>
               {s.label}
-              {s.mid ? <Bolt point={s.mid} partition={partition} armed={armed.has(s.mid)} onClick={() => arm(s.mid!)} /> : null}
+              {s.mid ? bolt(s.mid) : null}
             </div>
-            {s.after ? <Bolt point={s.after} partition={partition} armed={armed.has(s.after)} onClick={() => arm(s.after!)} /> : <span className="gap" />}
+            {s.after ? bolt(s.after) : <span className="gap" />}
           </div>
         ))}
       </div>
       <p className="hint">
-        Each step is one protocol step of P{partition}'s worker; highlighted = runs next. Hover a ⚡ for what a crash there leaves behind; click it to arm a crash for the next time P{partition} reaches that point (C2a/C3a: halfway
-        through the writes).
+        Each box is one protocol step of P{partition}'s worker; highlighted = runs next. Hover a ⚡ for what a crash there leaves behind.{" "}
+        {props.editable ? `Click one to crash P${partition} the next time it gets there.` : "A lit ⚡ is the crash this step injects."}
       </p>
     </section>
   );
@@ -265,7 +289,7 @@ const sum = (rows: readonly TotalsDiffRow[], k: "actual" | "expected") => rows.r
 
 /* ---------- Safeguards ---------- */
 
-export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: (s: Safeguards) => void }) {
+export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: ((s: Safeguards) => void) | null }) {
   const off = TOGGLES.filter((t) => !props.safeguards[t.safeguard]).length;
   return (
     <section className="panel safeguards">
@@ -274,13 +298,20 @@ export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: (s: S
       </h2>
       <p className="hint">
         Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all six on, no crash changes the bill.
-        Uncheck one to see the billing error it prevents; the same seed and crashes replay up to the current time.
+        {props.onChange
+          ? "Uncheck one to see the billing error it prevents; the same seed and crashes replay up to the current time."
+          : "Set by this step: the step buttons above flip them. Open the Sandbox scenario to change them yourself."}
       </p>
       {TOGGLES.map((t) => {
         const on = props.safeguards[t.safeguard];
         return (
-          <label key={t.name} className={`toggle ${on ? "" : "off"}`} title={`Off = ${t.name}. Exposed by: ${t.exposedBy}. ${t.teaches}.`}>
-            <input type="checkbox" checked={on} onChange={() => props.onChange({ ...props.safeguards, [t.safeguard]: !on })} />
+          <label key={t.name} className={`toggle ${on ? "" : "off"} ${props.onChange ? "" : "locked"}`} title={`Off = ${t.name}. Exposed by: ${t.exposedBy}. ${t.teaches}.`}>
+            <input
+              type="checkbox"
+              checked={on}
+              disabled={!props.onChange}
+              onChange={() => props.onChange?.({ ...props.safeguards, [t.safeguard]: !on })}
+            />
             <span className="rule">
               <span className="rule-name">{t.rule}</span>
               <span className="mono rule-state">{on ? "on" : `off: ${t.name}`}</span>

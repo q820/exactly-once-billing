@@ -162,7 +162,8 @@ Guided scenarios (each pins a seed, armed crashes and toggles):
 4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
 5. **At-least-once, crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip atLeastOnce. Red, over-billed.
 6. **The phone that came back:** one message delivered 3 weeks late lands in its old bucket and is billed. A different message, sent more than 30 days before it was appended, lands in the DropLog.
-7. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
+7. **Sandbox:** free play on the same seed; the only scenario where safeguards and crash points are editable (guided scenarios show theirs read-only).
+8. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
 
 **Visual tone:** calm and dense, like an engineering console. Use monospace for ids and offsets, and keep red and green for correctness only.
 

@@ -30,6 +30,8 @@ export interface Scenario {
   /** Messages the inspector should offer ("late" or "dropped" or "lost"). */
   readonly spotlight?: "late" | "lost";
   readonly crashTest?: boolean;
+  /** Free play: safeguards and crash points are editable. Guided scenarios are read-only. */
+  readonly sandbox?: boolean;
 }
 
 /** Small enough to watch, big enough to have every kind of event. */
@@ -170,8 +172,24 @@ export const SCENARIOS: readonly Scenario[] = [
     spotlight: "late",
   },
   {
+    id: "sandbox",
+    title: "7. Sandbox",
+    summary:
+      "Free play on the same seed: arm crashes by clicking ⚡ on any partition's pipeline, and turn safeguards off to see which billing error each one prevents.",
+    steps: [
+      {
+        label: "Start",
+        narration: "All safeguards on, no crashes armed. Whatever you crash, the ledger should stay green until you turn a safeguard off.",
+        spec: spec(),
+        expect: "green",
+        focusPartition: 3,
+      },
+    ],
+    sandbox: true,
+  },
+  {
     id: "crash-test",
-    title: "7. Crash test",
+    title: "8. Crash test",
     summary:
       "500 seeds with random crashes at every crash point, run in Web Workers: all safeguards on, then each toggle on its own.",
     steps: [

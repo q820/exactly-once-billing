@@ -13,7 +13,7 @@ Requires Node 24 and pnpm 10.
 
 ```sh
 pnpm install
-pnpm dev                                  # the demo UI at http://localhost:5173
+pnpm dev                                  # the demo UI at http://127.0.0.1:5180
 pnpm check                                # typecheck + lint + 128 tests
 pnpm crash-test -- --seeds 2000 --p 0.05     # writes results/crash-test.md and .json
 pnpm build                                # static site in apps/web/dist

@@ -343,6 +343,12 @@ button.link {
   margin-left: 2px;
   font-size: 10px;
 }
+.bolt.locked {
+  cursor: help;
+}
+.bolt.locked:not(.armed) {
+  opacity: 0.6;
+}
 .bolt.armed {
   border-color: var(--warn);
   background: color-mix(in srgb, var(--warn) 25%, var(--panel-2));
@@ -434,6 +440,12 @@ tr.expand td {
   color: var(--muted);
   font-size: 12px;
   min-height: calc(2 * 1.45em);
+}
+.toggle.locked {
+  cursor: default;
+}
+.toggle.locked input {
+  opacity: 1;
 }
 .toggle.off .rule-name,
 .toggle.off .rule-state,
