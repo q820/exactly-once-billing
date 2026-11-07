@@ -93,17 +93,17 @@ describe("nondeterministicBatches: the replay reads whatever is available up to 
   });
 });
 
-describe("blindUpsert: no CAS on the sink", () => {
+describe("atLeastOnce: no CAS on the sink", () => {
   it("crash at C3: the replay adds both rows again -> over-billed", () => {
-    expect(run("blindUpsert", "C3").net).toBe(BATCH2);
+    expect(run("atLeastOnce", "C3").net).toBe(BATCH2);
   });
 
   it("crash at C3a: the row written before the crash is added twice", () => {
-    expect(run("blindUpsert", "C3a").net).toBe(MARKETING); // m5's late row sorts first
+    expect(run("atLeastOnce", "C3a").net).toBe(MARKETING); // m5's late row sorts first
   });
 
   it("crash at C2 (nothing in the sink yet): still correct", () => {
-    expect(run("blindUpsert", "C2").matches).toBe(true);
+    expect(run("atLeastOnce", "C2").matches).toBe(true);
   });
 });
 

@@ -125,9 +125,9 @@
       "ms": 10928.531232000001
     },
     {
-      "name": "blindUpsert",
+      "name": "atLeastOnce",
       "toggles": [
-        "blindUpsert"
+        "atLeastOnce"
       ],
       "seeds": 2000,
       "failed": 1707,

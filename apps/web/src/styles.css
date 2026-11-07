@@ -140,6 +140,7 @@ button.link {
 }
 .steps .expect {
   flex: 1 1 400px;
+  min-height: calc(2 * 1.45em);
 }
 
 .grid {
@@ -184,6 +185,11 @@ button.link {
   font-size: 11px;
   border: 1px solid var(--accent);
   color: var(--accent);
+}
+.tag.modified {
+  border-color: var(--warn);
+  color: var(--warn);
+  vertical-align: middle;
 }
 .tag.late {
   border-color: var(--warn);
@@ -398,20 +404,41 @@ tr.expand td {
   color: var(--muted);
 }
 
-/* Safeguards */
+/* Safeguards: every row keeps the same text layout on and off, so toggling never reflows the page. */
 .toggle {
   display: grid;
-  grid-template-columns: 18px 170px 1fr;
-  gap: 6px;
+  grid-template-columns: 18px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
   align-items: baseline;
-  padding: 3px 0;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
 }
-.toggle.off .mono,
-.toggle.off .desc {
-  color: var(--bad);
+.toggle input {
+  grid-row: 1;
+}
+.toggle .rule {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.toggle .rule-name {
+  font-weight: 600;
+}
+.toggle .rule-state {
+  color: var(--good);
 }
 .toggle .desc {
+  grid-column: 2;
   color: var(--muted);
+  font-size: 12px;
+  min-height: calc(2 * 1.45em);
+}
+.toggle.off .rule-name,
+.toggle.off .rule-state,
+.toggle.off .desc {
+  color: var(--bad);
 }
 
 /* Inspector */

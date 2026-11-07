@@ -32,13 +32,17 @@ export type ToggleName =
   | "noDedupStore"
   | "dedupIgnoresBatchId"
   | "nondeterministicBatches"
-  | "blindUpsert"
+  | "atLeastOnce"
   | "restampReplay";
 
 export interface ToggleInfo {
   readonly name: ToggleName;
   readonly safeguard: keyof Safeguards;
-  /** One line, for the UI. */
+  /** The safeguard as a short rule name, for the UI. */
+  readonly rule: string;
+  /** What the safeguard guarantees, one line. */
+  readonly ruleDescription: string;
+  /** What breaks when it is off, one line. */
   readonly description: string;
   readonly exposedBy: string;
   readonly result: "over" | "under" | "diverges";
@@ -49,15 +53,19 @@ export const TOGGLES: readonly ToggleInfo[] = [
   {
     name: "atMostOnce",
     safeguard: "commitLast",
-    description: "Commit before processing (the legacy at-most-once behavior)",
+    rule: "Commit last",
+    ruleDescription: "A batch is committed only after all its sink writes, so a crash mid-batch replays it.",
+    description: "Commits before processing: a crash mid-batch skips the rest of the batch",
     exposedBy: "Crash at C1-C3a",
     result: "under",
-    teaches: "Why the original Scribe/Stylus pipeline lost revenue",
+    teaches: "Why committing before processing loses revenue",
   },
   {
     name: "noDedupStore",
     safeguard: "dedupStore",
-    description: "At-least-once only: no dedup lookups or writes",
+    rule: "Dedup by messageId",
+    ruleDescription: "Only the first copy of a message (other devices, retries) is billed.",
+    description: "No dedup: every copy of a message is billed",
     exposedBy: "No crash needed: any multi-device duplicate",
     result: "over",
     teaches: "Replay idempotency (CAS) doesn't cover duplicates in the source data",
@@ -65,6 +73,8 @@ export const TOGGLES: readonly ToggleInfo[] = [
   {
     name: "dedupIgnoresBatchId",
     safeguard: "dedupChecksBatchId",
+    rule: "Dedup knows its own batch",
+    ruleDescription: "An entry tagged with this BatchId is our own earlier attempt, not a duplicate.",
     description: "Any existing dedup key counts as a duplicate",
     exposedBy: "Crash at C2 or C3a",
     result: "under",
@@ -73,15 +83,19 @@ export const TOGGLES: readonly ToggleInfo[] = [
   {
     name: "nondeterministicBatches",
     safeguard: "deterministicBatches",
+    rule: "Replay reads its plan",
+    ruleDescription: "A replay reads exactly the offset range written in its plan.",
     description: "On recovery, read whatever is available up to a random size",
     exposedBy: "Crash at C2",
     result: "under",
     teaches: "Why the plan is written before reading",
   },
   {
-    name: "blindUpsert",
+    name: "atLeastOnce",
     safeguard: "casSink",
-    description: "Add the delta without a CAS check",
+    rule: "Compare-and-set sink",
+    ruleDescription: "A ledger row applies a batch only if lastApplied < BatchId, so a replay can't add twice.",
+    description: "Adds the delta without a CAS check: a replay bills its rows a second time",
     exposedBy: "Crash at C3 or C3a",
     result: "over",
     teaches: "Why the sink write must be conditional",
@@ -89,6 +103,8 @@ export const TOGGLES: readonly ToggleInfo[] = [
   {
     name: "restampReplay",
     safeguard: "replayKeepsBatchId",
+    rule: "Replay keeps its BatchId",
+    ruleDescription: "A replay runs under its planned BatchId, not the restarted worker's new epoch.",
     description: "A replay takes the new epoch as its BatchId",
     exposedBy: "Crash at C2 or C3a",
     result: "under",

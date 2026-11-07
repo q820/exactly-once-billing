@@ -35,7 +35,7 @@ pnpm build                                # static site in apps/web/dist
 | `noDedupStore` | 2000 / 2000 | $27,536.39 / $0.00 | 2000 / 2000 (100%) | $27,536.39 / $0.00 |
 | `dedupIgnoresBatchId` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
 | `nondeterministicBatches` | 2000 / 2000 | $0.00 / $489.88 | 426 / 2000 (21%) | $0.00 / $9.36 |
-| `blindUpsert` | 2000 / 2000 | $8,386.32 / $0.00 | 1707 / 2000 (85%) | $153.85 / $0.00 |
+| `atLeastOnce` | 2000 / 2000 | $8,386.32 / $0.00 | 1707 / 2000 (85%) | $153.85 / $0.00 |
 | `restampReplay` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
 
 `noDedupStore` fails without any crash: it bills every multi-device copy and infra retry. `nondeterministicBatches` fails least often because it needs a crash and a replay whose re-picked range comes out shorter.

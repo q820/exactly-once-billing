@@ -15,6 +15,8 @@ export function App() {
   const step = scenario.steps[stepIdx]!;
   const [ctrl, setCtrl] = useState(() => new Controller(step.spec));
   const [customLabel, setCustomLabel] = useState<string | null>(null);
+  /** Safeguards changed by hand on top of the current step: keep the scenario header, just mark it. */
+  const [modified, setModified] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(5);
   const [selected, setSelected] = useState(step.focusPartition);
@@ -29,6 +31,7 @@ export function App() {
     setSelected(focus);
     setInspect(null);
     setCustomLabel(label);
+    setModified(false);
   }, []);
 
   const goScenario = (i: number, s = 0) => {
@@ -57,7 +60,7 @@ export function App() {
     next.runUntil(t);
     setPlaying(false);
     setCtrl(next);
-    setCustomLabel("custom: safeguards changed");
+    setModified(true);
   };
 
   const replaySame = () => {
@@ -144,14 +147,17 @@ export function App() {
       </header>
 
       <section className="scenario">
-        <h1>{customLabel ?? scenario.title}</h1>
+        <h1>
+          {customLabel ?? scenario.title}
+          {modified ? <span className="tag modified">safeguards changed</span> : null}
+        </h1>
         <p>{customLabel ? describeSpec(ctrl.spec) : scenario.summary}</p>
         {!isCrashTest && !customLabel ? (
           <div className="steps">
             {scenario.steps.map((s, i) => (
               <button
                 key={s.label}
-                className={i === stepIdx && !customLabel ? "active" : ""}
+                className={i === stepIdx && !modified ? "active" : ""}
                 onClick={() => {
                   setStepIdx(i);
                   load(s.spec, s.focusPartition, null);
@@ -161,7 +167,18 @@ export function App() {
               </button>
             ))}
             <span className="expect">
-              {step.narration} <span className="muted">Expected: {expectLabel(step.expect)}.</span>
+              {modified ? (
+                <>
+                  {describeSpec(ctrl.spec)}{" "}
+                  <button className="link" onClick={() => load(step.spec, step.focusPartition, null)}>
+                    Reset to step {stepIdx + 1}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {step.narration} <span className="muted">Expected: {expectLabel(step.expect)}.</span>
+                </>
+              )}
             </span>
           </div>
         ) : null}

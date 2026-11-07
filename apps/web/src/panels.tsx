@@ -140,7 +140,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; onAr
   return (
     <section className="panel pipeline">
       <h2>
-        Pipeline · P{partition}{" "}
+        Crash points · P{partition}{" "}
         <span className="mono muted">
           {lane.status === "restarting"
             ? "worker down"
@@ -161,7 +161,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; onAr
         ))}
       </div>
       <p className="hint">
-        Highlighted = the step that runs next. Hover a ⚡ for what each crash point leaves behind; click it to arm a crash for the next time P{partition} reaches that point (C2a/C3a: halfway
+        Each step is one protocol step of P{partition}'s worker; highlighted = runs next. Hover a ⚡ for what a crash there leaves behind; click it to arm a crash for the next time P{partition} reaches that point (C2a/C3a: halfway
         through the writes).
       </p>
     </section>
@@ -266,20 +266,30 @@ const sum = (rows: readonly TotalsDiffRow[], k: "actual" | "expected") => rows.r
 /* ---------- Safeguards ---------- */
 
 export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: (s: Safeguards) => void }) {
+  const off = TOGGLES.filter((t) => !props.safeguards[t.safeguard]).length;
   return (
     <section className="panel safeguards">
-      <h2>Safeguards</h2>
-      <p className="hint">Turning one off replays the same seed and crashes up to the current time.</p>
+      <h2>
+        Safeguards <span className="muted">· the rules that make recovery exactly-once</span>
+      </h2>
+      <p className="hint">
+        Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all six on, no crash changes the bill.
+        Uncheck one to see the billing error it prevents; the same seed and crashes replay up to the current time.
+      </p>
       {TOGGLES.map((t) => {
         const on = props.safeguards[t.safeguard];
         return (
-          <label key={t.name} className={`toggle ${on ? "" : "off"}`} title={`${t.exposedBy}. ${t.teaches}.`}>
+          <label key={t.name} className={`toggle ${on ? "" : "off"}`} title={`Off = ${t.name}. Exposed by: ${t.exposedBy}. ${t.teaches}.`}>
             <input type="checkbox" checked={on} onChange={() => props.onChange({ ...props.safeguards, [t.safeguard]: !on })} />
-            <span className="mono">{on ? t.safeguard : t.name}</span>
-            <span className="desc">{on ? "on" : t.description}</span>
+            <span className="rule">
+              <span className="rule-name">{t.rule}</span>
+              <span className="mono rule-state">{on ? "on" : `off: ${t.name}`}</span>
+            </span>
+            <span className="desc">{on ? t.ruleDescription : t.description}</span>
           </label>
         );
       })}
+      <p className="hint">{off === 0 ? "All safeguards on: exactly-once." : `${off} off: expect the ledger to diverge once a crash exposes it.`}</p>
     </section>
   );
 }

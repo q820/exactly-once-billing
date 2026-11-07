@@ -53,7 +53,7 @@ Late events are normal, not a failure mode: a phone that comes online three week
 
 These came out of the toggle tests and the crash-test run, and are now folded back into PLAN.md:
 
-- **`atMostOnce` is exposed by C1 through C3a, not C1 through C3.** At C3 every sink row is already written, so committing early loses nothing. The legacy-pipeline scenario crashes at C3a instead.
+- **`atMostOnce` is exposed by C1 through C3a, not C1 through C3.** At C3 every sink row is already written, so committing early loses nothing. The at-most-once scenario crashes at C3a instead.
 - **`restampReplay` and `dedupIgnoresBatchId` produce identical results with dedup before sink:** in both, the replay mistakes its own first-attempt entries for duplicates. They differ when the sink runs first: the re-stamped id beats the row's CAS, so `restampReplay` over-bills where `dedupIgnoresBatchId` stays correct. A test pins the difference.
 - **`atMostOnce` over-bills a few rows ($0.24 over 2,000 seeds) while under-billing $16,778.** When a skipped batch loses a message's first copy, a later copy from another device can land in the next half-hour bucket and be billed there.
 

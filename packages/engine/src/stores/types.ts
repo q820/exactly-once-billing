@@ -54,7 +54,7 @@ export interface Ledger {
   /** Applies delta only if row.lastApplied < id. Atomic for one row. */
   casApply(key: SinkKey, delta: Micros, id: BatchId): CasResult;
   /**
-   * Adds delta unconditionally. Exists only for the `blindUpsert` break-it toggle;
+   * Adds delta unconditionally. Exists only for the `atLeastOnce` break-it toggle;
    * a correct worker never calls it.
    */
   blindAdd(key: SinkKey, delta: Micros, id: BatchId): void;

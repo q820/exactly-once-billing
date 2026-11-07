@@ -70,13 +70,20 @@ export const SCENARIOS: readonly Scenario[] = [
     spotlight: "late",
   },
   {
-    id: "legacy",
-    title: "2. The legacy pipeline",
+    id: "at-most-once",
+    title: "2. At-most-once: commit before processing",
     summary:
-      "atMostOnce is on: the worker commits the batch range before processing it, the way the original at-most-once pipeline did. P3 crashes at C3a, halfway through its sink writes.",
+      "P3 crashes at C3a, halfway through its sink writes. With commit last, the uncommitted batch replays. With atMostOnce, the batch was committed before processing, so recovery skips it.",
     steps: [
       {
-        label: "Crash at C3a with atMostOnce",
+        label: "Safeguards on",
+        narration: "The batch wasn't committed, so the restarted worker replays it. The CAS rejects the rows already written and applies the rest. Green.",
+        spec: spec({ crashes: crashAt("C3a") }),
+        expect: "green",
+        focusPartition: 3,
+      },
+      {
+        label: "Flip atMostOnce",
         narration:
           "On restart the batch already looks committed, so it is never replayed. The rows written before the crash survive; the rest are lost for good, and later copies of those messages are treated as duplicates.",
         spec: spec({ toggles: ["atMostOnce"], crashes: crashAt("C3a") }),
@@ -127,7 +134,7 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: "c3",
-    title: "5. Crash after sink, before commit",
+    title: "5. At-least-once: crash after sink, before commit",
     summary: "P3 crashes at C3: the sink rows are written but the batch isn't committed, so it replays.",
     steps: [
       {
@@ -138,9 +145,9 @@ export const SCENARIOS: readonly Scenario[] = [
         focusPartition: 3,
       },
       {
-        label: "Flip blindUpsert and replay",
-        narration: "Without the CAS check the replay adds its deltas a second time. Red, over-billed.",
-        spec: spec({ toggles: ["blindUpsert"], crashes: crashAt("C3") }),
+        label: "Flip atLeastOnce and replay",
+        narration: "Without the CAS check the replay adds its deltas a second time: at-least-once. Red, over-billed.",
+        spec: spec({ toggles: ["atLeastOnce"], crashes: crashAt("C3") }),
         expect: "over",
         focusPartition: 3,
       },

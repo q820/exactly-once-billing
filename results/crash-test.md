@@ -9,7 +9,7 @@
 | `noDedupStore` | 2000 | 2000 (100%) | $27,536.39 | $0.00 | 0 | 764,192 | pass |
 | `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `nondeterministicBatches` | 2000 | 2000 (100%) | $0.00 | $489.88 | 0 | 636,117 | pass |
-| `blindUpsert` | 2000 | 2000 (100%) | $8,386.32 | $0.00 | 0 | 746,507 | pass |
+| `atLeastOnce` | 2000 | 2000 (100%) | $8,386.32 | $0.00 | 0 | 746,507 | pass |
 | `restampReplay` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 
 Verdict: "all safeguards on" passes with 0 failed seeds; each break-it toggle passes when it fails at least one seed.
@@ -96,7 +96,7 @@ under-billed $0.16; 11 ledger rows differ; 316 crashes in the run.
 ... 304 more
 ```
 
-### `blindUpsert`: seed 1
+### `atLeastOnce`: seed 1
 
 over-billed $4.21; 196 ledger rows differ; 372 crashes in the run.
 

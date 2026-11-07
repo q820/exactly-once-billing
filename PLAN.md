@@ -97,11 +97,11 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
-| `atMostOnce`: commit before processing (the legacy at-most-once behavior) | Crash at C1–C3a | Under-billed. The batch is skipped on restart (at C3 every sink row is already written, so nothing is lost) | Why the original Scribe/Stylus pipeline lost revenue |
+| `atMostOnce`: commit before processing | Crash at C1–C3a | Under-billed. The batch is skipped on restart (at C3 every sink row is already written, so nothing is lost) | Why committing before processing loses revenue |
 | `noDedupStore`: at-least-once only | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
 | `dedupIgnoresBatchId`: any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
 | `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
-| `blindUpsert`: add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
+| `atLeastOnce`: add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
 | `restampReplay`: replay uses the new epoch | Crash at C2 or C3a | Under-billed. Entries from the first attempt now look older than the replay, so they're treated as duplicates | Why a replay keeps its planned BatchId |
 
 `restampReplay` is a stretch goal (`processingClock` was cut: retention uses only record fields, so the toggle was a strawman). Each guided scenario in the UI pairs one toggle with the crash point that exposes it, so the reviewer sees the failure on the first try.
@@ -157,10 +157,10 @@ Layout, top to bottom:
 Guided scenarios (each pins a seed, armed crashes and toggles):
 
 1. **Normal day:** duplicates and late events, no crashes. All green, and late events land in old buckets.
-2. **The legacy pipeline:** atMostOnce on, crash at C3a (halfway through the sink writes). Red, under-billed.
+2. **At-most-once:** crash at C3a (halfway through the sink writes). Green with safeguards on. Flip atMostOnce. Red, under-billed.
 3. **Crash after dedup, before sink:** safeguards on, crash at C2. Green. Then flip dedupIgnoresBatchId and replay. Red, under-billed.
 4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
-5. **Crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip blindUpsert. Red, over-billed.
+5. **At-least-once, crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip atLeastOnce. Red, over-billed.
 6. **The phone that came back:** one message delivered 3 weeks late lands in its old bucket and is billed. A different message, sent more than 30 days before it was appended, lands in the DropLog.
 7. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
 
