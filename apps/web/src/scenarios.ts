@@ -8,6 +8,8 @@ export interface RunSpec {
   readonly crashes: readonly ScriptedCrash[];
   /** Random crashes at every crash point (crash-test replays). */
   readonly crashProbability: number;
+  /** Seed for the random crashes; defaults to `seed`. */
+  readonly crashSeed?: number;
 }
 
 export type Outcome = "green" | "over" | "under" | "mixed";

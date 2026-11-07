@@ -6,6 +6,7 @@ export function simOptions(spec: RunSpec, extra?: CrashInjector) {
   const scripted = scriptedCrash(...spec.crashes);
   return {
     crashProbability: spec.crashProbability,
+    ...(spec.crashSeed === undefined ? {} : { crashSeed: spec.crashSeed }),
     crash: extra ? anyCrash(scripted, extra) : scripted,
     worker: { safeguards: spec.safeguards },
   };

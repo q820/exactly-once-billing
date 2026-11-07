@@ -58,6 +58,11 @@ export function simConfig(seed: number, overrides: SimOverrides = {}): SimConfig
 export interface SimOptions {
   /** Random crashes with this probability at each crash point (crash-test mode). */
   readonly crashProbability?: number;
+  /**
+   * Seed for the random-crash stream only. Defaults to the run seed. A different
+   * crash seed gives different crashes on the same workload, still reproducibly.
+   */
+  readonly crashSeed?: number;
   /** Scripted crashes, combined with random ones. */
   readonly crash?: CrashInjector;
   /** Check I1, I3, I4 on every store write. Default true. */
@@ -150,7 +155,7 @@ export class Simulation {
     this.writeStores = opts.checkInvariants === false ? this.stores : withInvariants(this.stores);
     this.platformRng = mulberry32(deriveSeed(config.seed, "platform"));
     this.workerRng = mulberry32(deriveSeed(config.seed, "worker"));
-    const crashRng = mulberry32(deriveSeed(config.seed, "crash"));
+    const crashRng = mulberry32(deriveSeed(opts.crashSeed ?? config.seed, "crash"));
     const injectors: CrashInjector[] = [];
     if (opts.crashProbability) injectors.push(randomCrashes(crashRng.next, opts.crashProbability));
     if (opts.crash) injectors.push(opts.crash);

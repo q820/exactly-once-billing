@@ -7,6 +7,9 @@ import { SCENARIOS, type RunSpec } from "./scenarios.js";
 import { CrashTestPanel } from "./CrashTestPanel.js";
 
 const SPEEDS = [1, 5, 25, 100] as const;
+const CRASH_RATES = [0, 0.001, 0.01, 0.05] as const;
+/** UI only: the engine stays a pure function of its seeds; the chosen seed is shown so any run can be replayed. */
+const newCrashSeed = () => Math.floor(Math.random() * 2 ** 32);
 
 export function App() {
   const [scenarioIdx, setScenarioIdx] = useState(0);
@@ -54,17 +57,22 @@ export function App() {
   }, [playing, speed, ctrl, rerender]);
 
   /** Flip a toggle: same seed, same crashes (including ones armed live), replayed up to the current sim time. */
-  const changeSafeguards = (s: Safeguards) => {
+  const [rerollOnRestart, setRerollOnRestart] = useState(true);
+
+  /** Change part of the spec (Sandbox): same seed and crashes so far, replayed up to the current sim time. */
+  const changeSpec = (patch: Partial<RunSpec>) => {
     const t = ctrl.sim.now;
-    const next = new Controller({ ...ctrl.spec, safeguards: s, crashes: ctrl.replayCrashes() });
+    const next = new Controller({ ...ctrl.spec, crashes: ctrl.replayCrashes(), ...patch });
     next.runUntil(t);
     setPlaying(false);
     setCtrl(next);
     setModified(true);
   };
+  const changeSafeguards = (s: Safeguards) => changeSpec({ safeguards: s });
 
   const replaySame = () => {
-    const next = new Controller({ ...ctrl.spec, crashes: ctrl.replayCrashes() });
+    const reroll = editable && rerollOnRestart && ctrl.spec.crashProbability > 0;
+    const next = new Controller({ ...ctrl.spec, crashes: ctrl.replayCrashes(), ...(reroll ? { crashSeed: newCrashSeed() } : {}) });
     setPlaying(false);
     setCtrl(next);
   };
@@ -106,7 +114,10 @@ export function App() {
         </select>
         {!isCrashTest ? (
           <>
-            <span className="mono muted">seed {ctrl.spec.seed}</span>
+            <span className="mono muted">
+              seed {ctrl.spec.seed}
+              {ctrl.spec.crashProbability > 0 ? ` · crash seed ${ctrl.spec.crashSeed ?? ctrl.spec.seed}` : ""}
+            </span>
             <button className="primary" onClick={() => setPlaying(!playing)} disabled={status.drained}>
               {playing ? "Pause" : "Play"}
             </button>
@@ -186,7 +197,36 @@ export function App() {
       ) : (
         <main className="grid">
           <div className="col">
-            <PipelineStrip ctrl={ctrl} partition={selected} editable={editable} onArm={rerender} />
+            <PipelineStrip ctrl={ctrl} partition={selected} editable={editable} onArm={rerender}>
+              {editable ? (
+                <div className="random-crashes">
+                  <label>
+                    Random crashes{" "}
+                    <select
+                      value={ctrl.spec.crashProbability}
+                      onChange={(e) => changeSpec({ crashProbability: Number(e.target.value) })}
+                    >
+                      {CRASH_RATES.map((r) => (
+                        <option key={r} value={r}>
+                          {r ? `p = ${r} at every crash point` : "off"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {ctrl.spec.crashProbability > 0 ? (
+                    <>
+                      <button onClick={() => changeSpec({ crashSeed: newCrashSeed() })} title="Same workload, different random crashes">
+                        New crash seed
+                      </button>
+                      <label className="muted">
+                        <input type="checkbox" checked={rerollOnRestart} onChange={(e) => setRerollOnRestart(e.target.checked)} /> new crash seed on
+                        every Restart
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </PipelineStrip>
             <Lanes ctrl={ctrl} selected={selected} onSelect={setSelected} />
             <LedgerPanel ctrl={ctrl} status={status} onInspect={setInspect} />
           </div>
@@ -214,7 +254,7 @@ function describeSpec(spec: RunSpec): string {
   return [
     `Seed ${spec.seed}.`,
     off.length ? `Safeguards off: ${off.join(", ")}.` : "All safeguards on.",
-    spec.crashProbability ? `Random crashes with p = ${spec.crashProbability} at every crash point.` : "",
+    spec.crashProbability ? `Random crashes with p = ${spec.crashProbability} at every crash point (crash seed ${spec.crashSeed ?? spec.seed}).` : "",
     spec.crashes.length ? `Scripted crashes: ${spec.crashes.map((c) => `P${c.partition} batch ${c.batchIdx} at ${c.point}`).join(", ")}.` : "",
   ]
     .filter(Boolean)

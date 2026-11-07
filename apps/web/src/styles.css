@@ -359,6 +359,13 @@ button.link {
   position: relative;
   z-index: 3;
 }
+.random-crashes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 .pipeline .hint {
   margin-top: 16px;
 }

@@ -139,7 +139,7 @@ function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; scr
   );
 }
 
-export function PipelineStrip(props: { ctrl: Controller; partition: number; editable: boolean; onArm: () => void }) {
+export function PipelineStrip(props: { ctrl: Controller; partition: number; editable: boolean; onArm: () => void; children?: React.ReactNode }) {
   const { ctrl, partition } = props;
   const lane = ctrl.sim.lane(partition);
   const w = lane.worker;
@@ -172,6 +172,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
         </span>
         {w?.isReplay ? <span className="tag">replay</span> : null}
       </h2>
+      {props.children}
       <div className="strip">
         {w?.phase === "recover" ? <div className="step next">Recover</div> : null}
         {STEPS.map((s) => (
@@ -297,7 +298,7 @@ export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: ((s: 
         Safeguards <span className="muted">· the rules that make recovery exactly-once</span>
       </h2>
       <p className="hint">
-        Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all six on, no crash changes the bill.
+        Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all six on, no crash changes the bill.{" "}
         {props.onChange
           ? "Uncheck one to see the billing error it prevents; the same seed and crashes replay up to the current time."
           : "Set by this step: the step buttons above flip them. Open the Sandbox scenario to change them yourself."}

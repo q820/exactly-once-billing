@@ -133,6 +133,21 @@ describe("simulation", () => {
     expect(b.ledger).toBe(a.ledger);
   });
 
+  it("a crash seed changes only the crashes: same workload, same totals, reproducible", () => {
+    const run = (crashSeed?: number) => {
+      const sim = new Simulation(small, { crashProbability: 0.05, trace: true, ...(crashSeed === undefined ? {} : { crashSeed }) });
+      sim.run();
+      return { trace: sim.trace.join("\n"), events: sim.workload.events, totals: ledgerTotals(sim.stores.ledger) };
+    };
+    const base = run();
+    expect(run(11).trace).toBe(base.trace); // defaults to the run seed
+    const other = run(12345);
+    expect(other.trace).not.toBe(base.trace);
+    expect(other.events).toEqual(base.events);
+    expect(other.totals).toEqual(base.totals);
+    expect(run(12345).trace).toBe(other.trace);
+  });
+
   it("different seeds give different traces", () => {
     const trace = (seed: number) => {
       const sim = new Simulation(simConfig(seed, { workload: { messages: 100 } }), { trace: true });
