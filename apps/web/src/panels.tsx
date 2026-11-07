@@ -72,23 +72,71 @@ const STEPS: { phase: Phase; label: string; mid?: CrashPoint; after?: CrashPoint
   { phase: "commit", label: "Commit", after: "C4" },
 ];
 
+/** What has survived in the stores when the worker dies at each point, and what recovery does about it. */
+export const CRASH_POINT_INFO: Record<CrashPoint, { when: string; state: string; recovery: string }> = {
+  C1: {
+    when: "After the plan is written, before reading",
+    state: "Only the batch range (offsets and BatchId) is saved. Nothing is deduped or billed yet.",
+    recovery: "The restarted worker replays exactly that range under the same BatchId.",
+  },
+  C2a: {
+    when: "Halfway through the dedup writes",
+    state: "Some of the batch's messageIds are marked as seen by this BatchId, the rest aren't. Nothing is billed yet.",
+    recovery: "The replay finds entries tagged with its own BatchId and keeps those messages instead of treating them as duplicates.",
+  },
+  C2: {
+    when: "After all dedup writes, before the sink",
+    state: "Every message in the batch is marked as seen, but none is billed.",
+    recovery: "The replay recognises all the entries as its own (same BatchId) and bills every message.",
+  },
+  C3a: {
+    when: "Halfway through the sink writes",
+    state: "Some ledger rows already carry this batch's delta (lastApplied = this BatchId), the rest don't.",
+    recovery: "The replay's compare-and-set rejects the rows already written and applies the rest. No rollback needed.",
+  },
+  C3: {
+    when: "After all sink writes, before the commit",
+    state: "Everything is billed, but the batch isn't committed, so recovery can't know it's done.",
+    recovery: "The replay re-runs the whole batch; every row's compare-and-set rejects the second write.",
+  },
+  C4: {
+    when: "After the commit",
+    state: "The batch is done and committed.",
+    recovery: "Nothing to replay: the restarted worker plans the next batch.",
+  },
+};
+
+/** Top-level so React keeps the same button across re-renders (keeps hover, focus and clicks while playing). */
+function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; onClick: () => void }) {
+  const info = CRASH_POINT_INFO[props.point];
+  return (
+    <span className="bolt-wrap">
+      <button className={`bolt ${props.armed ? "armed" : ""}`} aria-describedby={`tip-${props.point}`} onClick={props.onClick}>
+        ⚡<span className="mono">{props.point}</span>
+      </button>
+      <span className="tip" role="tooltip" id={`tip-${props.point}`}>
+        <strong>
+          {props.point}: {info.when}
+        </strong>
+        <span>{info.state}</span>
+        <span>{info.recovery}</span>
+        <span className="tip-action">
+          {props.armed ? `Armed for P${props.partition}: click to disarm.` : `Click to crash P${props.partition} the next time it reaches ${props.point}.`}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 export function PipelineStrip(props: { ctrl: Controller; partition: number; onArm: () => void }) {
   const { ctrl, partition } = props;
   const lane = ctrl.sim.lane(partition);
   const w = lane.worker;
   const armed = new Set(ctrl.armed.filter((a) => a.partition === partition).map((a) => a.point));
-  const Bolt = ({ point }: { point: CrashPoint }) => (
-    <button
-      className={`bolt ${armed.has(point) ? "armed" : ""}`}
-      title={armed.has(point) ? `${point} armed: click to disarm` : `Crash P${partition} the next time it reaches ${point}`}
-      onClick={() => {
-        ctrl.arm(partition, point);
-        props.onArm();
-      }}
-    >
-      ⚡<span className="mono">{point}</span>
-    </button>
-  );
+  const arm = (point: CrashPoint) => {
+    ctrl.arm(partition, point);
+    props.onArm();
+  };
   return (
     <section className="panel pipeline">
       <h2>
@@ -106,14 +154,14 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; onAr
           <div key={s.phase} className="step-wrap">
             <div className={`step ${w?.phase === s.phase ? "next" : ""}`}>
               {s.label}
-              {s.mid ? <Bolt point={s.mid} /> : null}
+              {s.mid ? <Bolt point={s.mid} partition={partition} armed={armed.has(s.mid)} onClick={() => arm(s.mid!)} /> : null}
             </div>
-            {s.after ? <Bolt point={s.after} /> : <span className="gap" />}
+            {s.after ? <Bolt point={s.after} partition={partition} armed={armed.has(s.after)} onClick={() => arm(s.after!)} /> : <span className="gap" />}
           </div>
         ))}
       </div>
       <p className="hint">
-        Highlighted = the step that runs next. ⚡ arms a crash for the next time P{partition} reaches that point (C2a/C3a: halfway
+        Highlighted = the step that runs next. Hover a ⚡ for what each crash point leaves behind; click it to arm a crash for the next time P{partition} reaches that point (C2a/C3a: halfway
         through the writes).
       </p>
     </section>

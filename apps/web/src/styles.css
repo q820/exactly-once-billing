@@ -82,7 +82,7 @@ button.link {
 .header {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -284,11 +284,45 @@ button.link {
   box-shadow: 0 0 0 1px var(--accent) inset;
   color: #fff;
 }
-.step .bolt {
+.step .bolt-wrap {
   position: absolute;
   bottom: -12px;
   left: 50%;
   transform: translateX(-50%);
+}
+.bolt-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 280px;
+  padding: 8px 10px;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font-weight: normal;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--warn);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+.bolt-wrap:hover .tip,
+.bolt-wrap:focus-within .tip {
+  display: flex;
+}
+.tip strong {
+  color: var(--warn);
+}
+.tip .tip-action {
+  color: var(--muted);
 }
 .gap {
   width: 14px;
@@ -307,6 +341,11 @@ button.link {
   border-color: var(--warn);
   background: color-mix(in srgb, var(--warn) 25%, var(--panel-2));
   color: #fff;
+}
+.panel.pipeline {
+  /* Lift the panel so crash-point tooltips paint over the lanes below it. */
+  position: relative;
+  z-index: 3;
 }
 .pipeline .hint {
   margin-top: 16px;
