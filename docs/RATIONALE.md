@@ -76,17 +76,18 @@ These came out of the toggle tests and the crash-test run, and are now folded ba
 
 ## Time spent
 
-Measured from the Claude Code session transcript and commit history. "Active" counts transcript activity (prompts, tool calls, replies) with idle gaps over 20 minutes removed, so it includes my time reading and prompting but not time away. The planning chat happened separately on claude.ai and isn't in this transcript.
+The planning chat is timed from its transcript (first message to finished plan). The build is measured from the Claude Code session transcript and commit history: "active" counts transcript activity (prompts, tool calls, replies) with idle gaps over 20 minutes removed, so it includes my time reading and prompting but not time away.
 
 | Phase | When (PT) | Active |
 | --- | --- | ---: |
-| Planning chat (claude.ai): theme, design, PLAN | before Nov 4 | _not in transcript_ |
+| Planning chat (claude.ai): theme and direction, protocol design, scope cuts (delivery events only, flat retention TTL, static partitions), the build plan | Nov 4, 09:36–~11:20 | ≈ 1 h 45 min |
 | Setup and M0: Node 24 install workaround (no Homebrew bottle for this Intel Mac), pnpm workspace, lint rules, CI | Nov 4, 16:07–17:53 | 58 min |
 | M1: engine types, stores, worker protocol, crash points, tests (plan reviewed first) | Nov 4, 21:23–21:28 | 5 min |
 | M2–M4, one autonomous run: scheduler, workload, oracle, invariants, toggles, crash-test CLI, 2,000-seed run, web UI | Nov 5, 08:40–09:02 | 22 min |
 | M4 browser check and M5 docs (README, RATIONALE, Pages workflow) | Nov 5, 17:43–17:47 | 4 min |
 | Review and iteration: rename to crash test, cut processingClock, 30-day retention, atMostOnce/atLeastOnce, p = 0.001 run, UI fixes (remount bug, tooltips, stable safeguards, read-only scenarios, Sandbox, crash seed), spec re-validation | Nov 7, 09:51–11:28 | 97 min |
 | Publish: GitHub repo, CI, GitHub Pages | Nov 7, 12:45–13:14 | 29 min |
-| **Total in Claude Code** | Nov 4–7 | **≈ 3 h 35 min** |
+| Build total (Claude Code) | Nov 4–7 | ≈ 3 h 35 min |
+| **Total** | | **≈ 5 h 20 min** |
 
 The longest idle stretch (Nov 5, 09:02–17:43) was the build waiting on the Chrome extension setup for in-browser verification; it is not counted.
