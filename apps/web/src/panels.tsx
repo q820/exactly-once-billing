@@ -70,10 +70,18 @@ interface StripStep {
   readonly after?: CrashPoint;
   /** Shown in red: the step a disabled safeguard moved. */
   readonly broken?: string;
+  /** Hover text for the box. */
+  readonly tip?: string;
 }
 
 const STEPS: readonly StripStep[] = [
-  { key: "plan", phase: "plan", label: "Plan", after: "C1" },
+  {
+    key: "plan",
+    phase: "plan",
+    label: "Plan",
+    after: "C1",
+    tip: "Fix the batch's offset range and BatchId before reading. After a restart, an uncommitted plan is reused as is (same range, same BatchId) and the batch replays; otherwise the next batch is planned.",
+  },
   { key: "read", phase: "read", label: "Read" },
   { key: "filter", phase: "filter", label: "Filter" },
   { key: "dedup", phase: "writeDedup", label: "Dedup", mid: "C2a", after: "C2" },
@@ -213,10 +221,12 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
       </h2>
       {props.children}
       <div className="strip">
-        {w?.phase === "recover" ? <div className="step next">Recover</div> : null}
         {steps.map((s) => (
           <div key={s.key} className="step-wrap">
-            <div className={`step ${w?.phase === s.phase ? "next" : ""} ${s.broken ? "broken" : ""}`} title={s.broken}>
+            <div
+              className={`step ${w?.phase === s.phase || (s.key === "plan" && w?.phase === "recover") ? "next" : ""} ${s.broken ? "broken" : ""}`}
+              title={s.broken ?? s.tip}
+            >
               {s.label}
               {s.mid ? bolt(s.mid) : null}
             </div>
