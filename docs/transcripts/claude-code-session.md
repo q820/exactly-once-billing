@@ -2164,5 +2164,639 @@ The same file is at `docs/RATIONALE.md` in your local repo. If you'd rather revi
 ## You · Wed Nov 11, 09:52
 
 add today's transcripts as well and udpate time spent.
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: S=/private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takehome-2026/41996019-dc1c-4211-8ef
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 09:53
+
+The transcript now runs through today and the time-spent figures are updated. Both are committed and pushed (`70e7df4`).
+
+**Transcript** (`docs/transcripts/claude-code-session.md`): regenerated from the full session log, Nov 4–11. It now ends at your "add today's transcripts" message. It has the same treatment as before: your prompts and my replies verbatim, tool calls as one-line summaries, home paths shortened, and the recruiter's name replaced. I re-scanned it and found no local paths, emails or names.
+
+**Time spent:** about **3 h 25 min** hands-on, up from 2 h 40 min. Same method: your time capped at 3 minutes per prompt, Claude's time counted only for back-to-back steps.
+
+| Phase | You | Claude | Total |
+| --- | ---: | ---: | ---: |
+| Planning chat | 17 min | ~12 min | ~30 min |
+| Setup and M0 | 10 min | 7 min | 17 min |
+| M1 | 3 min | 5 min | 8 min |
+| M2–M5, autonomous run | 6 min | 26 min | 32 min |
+| Review and iteration | 29 min | 21 min | 50 min |
+| Publish: repo, CI, Pages | 10 min | 5 min | 15 min |
+| **New:** docs and wrap-up (Nov 7 and 11) | 41 min | 13 min | 54 min |
+| **Total** | **~1 h 55 min** | **~1 h 30 min** | **~3 h 25 min** |
+
+The publish row went from 22 to 15 minutes because the time accounting work moved into the new docs and wrap-up row. That row covers the transcripts, learnings section, video script and dropping scenario 6.
+
+RATIONALE for your review, with the new numbers: https://github.com/q820/exactly-once-billing/blob/main/docs/RATIONALE.md
+
+
+## You · Wed Nov 11, 09:54
+
+remove comment "elapsed time was much longer" wtf. also, how to set the seed?
 
 > 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: git add -A && git commit -qm "RATIONALE: drop elapsed-time note
+
+### Claude · Wed Nov 11, 09:55
+
+I removed the "elapsed time was much longer" line from RATIONALE and pushed it (`9c4a56d`).
+
+**On the seed: in the UI you mostly can't set it today.**
+- **Run seed:** fixed at 4 for every guided scenario and the Sandbox. The header shows it ("seed 4"), but you can't edit it. The seed decides the messages, partitions and restart delays.
+- **Crash seed:** only the Sandbox lets you change it, once random crashes are on. **New crash seed** picks one at random, and **New crash seed on every Restart** rerolls it each run. The header shows the value, but there's no box to type one in.
+- **Indirectly:** each failing row in the crash-test table has a **replay seed N** link, which opens that exact seed.
+
+**In the CLI:** `pnpm crash-test -- --seeds N` always runs seeds 1 to N. There's no flag to run one particular seed, or to start somewhere other than 1.
+
+**What I'd add, if you want it:**
+- **Sandbox:** two number inputs in the header, for the run seed and the crash seed. Typing a value re-runs with it, so you can reproduce any run exactly, including one from the crash test or the CLI.
+- **CLI:** a `--seed N` flag that runs a single seed and prints its trace.
+
+Both are small. Want them, or is replaying from the crash-test table enough?
+
+
+## You · Wed Nov 11, 09:55
+
+dont care about CLI. waht does the run seed or crash seed do?
+
+
+### Claude · Wed Nov 11, 09:55
+
+Both seeds drive the simulation's random choices, and each controls a different part. Any run is fully determined by the two seeds, the safeguard settings and the scripted crashes. Same values give an identical run, down to every crash and every cent.
+
+**The run seed decides the traffic:** what happened on this simulated "day".
+- **The messages themselves:** about 1,500 in the demo, each with an account, a SKU and a price.
+- **Which messages are special:** which go to 2–3 devices, which get an infra retry, which arrive weeks late, and which are past the 30-day retention window.
+- **Timing:** when each copy reaches the log, which decides which batches it falls into.
+- **Restart delays:** how long the platform takes to restart a crashed worker, 5–30 seconds of simulated time.
+- **One toggle:** the random batch size the `nondeterministicBatches` toggle uses on replay.
+
+A new run seed means different traffic, and so a **different correct bill**.
+
+**The crash seed decides where random crashes hit.** It only matters when random crashes are on, in the Sandbox or a crash-test replay. With a crash rate p, at every crash point the worker reaches it decides whether that point fires. By default it equals the run seed.
+
+A new crash seed means the **same traffic and the same correct bill, but different crashes**. That's why it's separate: you can keep the workload fixed and throw new failures at it, which is what the Sandbox's reroll does.
+
+**Neither seed touches scripted crashes.** "Crash P3 at C3a during batch 2" in the guided scenarios, and the ⚡ crashes you arm by clicking, fire exactly where they're set, whatever the seeds.
+
+So the crash seed is the one worth playing with, and the Sandbox already lets you reroll it. Changing the run seed would only give a different day of traffic with the same lessons. Being able to type a seed in only matters for reproducing a specific run. The crash-test "replay seed" links already cover that.
+
+
+## You · Wed Nov 11, 09:56
+
+make them editable in the UI, (optional, each in its adequate box / area)
+
+> 🔧 Bash: grep -n "seed {ctrl.spec.seed}" -B2 -A4 apps/web/src/App.tsx; grep -n "New crash seed" -B3 -A3 apps/
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 09:56
+
+Before checking in the browser, one bug: pressing Escape would still apply the typed value, because the blur handler reads the old text. Fixing that:
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Chrome navigate
+> 🔧 Chrome find
+> 🔧 Chrome tabs_context_mcp
+> 🔧 Chrome tabs_create_mcp
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+
+### Claude · Wed Nov 11, 09:57
+
+Status: the seed boxes render in the Sandbox. I'm testing that typing a seed changes the run and that Escape reverts it.
+
+> 🔧 Chrome browser_batch
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Chrome tabs_close_mcp
+
+### Claude · Wed Nov 11, 09:58
+
+Both seeds can now be typed into the Sandbox (`7b380c1`, pushed), and the live site redeploys with the push.
+
+**Run seed:** in the header, where "seed 4" was. Type a number and press Enter, or click away, to apply it. A new run seed starts the run over, since it's a different set of traffic.
+
+**Crash seed:** in the "Random crashes" row, next to **New crash seed**. It only appears once random crashes are on. A new crash seed replays the run to the current point with the new crashes, so the traffic and the correct bill stay the same.
+
+**Both boxes:**
+- **Escape** puts back the previous value.
+- **Invalid input** (not a whole number from 0 to 4,294,967,295) also reverts.
+- **Hover the label** to see what that seed controls.
+
+**Restart and a typed crash seed:** typing a crash seed unticks "new crash seed on every Restart". Otherwise Restart would immediately replace the seed you just typed.
+
+**Elsewhere:** guided scenarios and crash-test replays still show their seeds as plain text you can't edit. That keeps the guided scenarios showing what they're meant to show.
+
+**Checked:** I tried it in Chrome on the local dev server. Seed 42 applied, Escape reverted, and Enter applied crash seed 777. The step description updated each time: "Seed 42 … (crash seed 777)". The 130 tests and the build both pass.
+
+
+## You · Wed Nov 11, 10:11
+
+remove seed from ui if not editable
+
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 10:12
+
+Seeds now only appear where you can edit them, in the Sandbox (`d6411ed`, pushed and redeploying).
+
+- **Guided scenarios:** the read-only "seed 4" is gone from the header.
+- **Crash-test replays:** the "Seed N" and "(crash seed N)" text is gone from the description under the title. The replay's title still names the seed you clicked, e.g. "Crash test replay: atMostOnce, seed 1".
+- **Sandbox:** unchanged. The run seed box is in the header, and the crash seed box appears in the random-crashes row once random crashes are on.
+
+Tests and the build pass.
+
+
+## You · Wed Nov 11, 10:23
+
+when commit isn't last.. in that scenario.. shouldnt' the UI of the Crash points update as well? toggle order?
+
+
+### Claude · Wed Nov 11, 10:23
+
+Good point: the strip always draws Commit last, even when `atMostOnce` commits right after Plan. Let me check what the worker actually does in that mode so the strip matches it exactly:
+
+> 🔧 Bash: sed -n "$(grep -n 'private commit(): StepResult' packages/engine/src/worker.ts | cut -d: -f1),+22p" 
+> 🔧 Bash: sed -n "$(grep -n '^const STEPS' apps/web/src/panels.tsx | cut -d: -f1),+10p" apps/web/src/panels.ts
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 10:24
+
+Checking it in the browser on scenario 2, step 2:
+
+> 🔧 Chrome tabs_create_mcp
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Bash: export PATH=$HOME/.local/node/bin:$PATH; pnpm build 2>&1 | tail -1; git add -A && git commit -qm "Cr
+> 🔧 Chrome tabs_close_mcp
+
+### Claude · Wed Nov 11, 10:25
+
+Yes, it should have, and now it does (`06f41c5`, pushed and redeploying). When `atMostOnce` is on, the Crash points strip shows the order the worker actually runs in:
+
+```
+Safeguards on:  Plan ⚡C1 → Read → Filter → Dedup ⚡C2a ⚡C2 → Aggregate → Sink ⚡C3a ⚡C3 → Commit ⚡C4
+atMostOnce:     Plan → [Commit] ⚡C1 → Read → Filter → Dedup ⚡C2a ⚡C2 → Aggregate → Sink ⚡C3a ⚡C3 → Expire ⚡C4
+```
+
+- **Commit moves up next to Plan.** Its box is red, and hovering it says the batch is committed there, before any work, so a crash anywhere from C1 to C3a loses the rest of the batch. This matches the engine: in this mode the worker writes the commit inside the Plan step, before C1.
+- **The last box becomes "Expire".** That step still runs, but its commit just rewrites the same commit and changes nothing. Its real work is expiring old dedup entries. Calling it "Commit" would suggest there are two meaningful commits.
+- **The crash-point tooltips change their recovery line, shown in red:**
+  - C1, C2a and C2: the batch already looks committed, so recovery skips it and nothing in it is billed. At C2a and C2, its dedup entries also make later copies of those messages look like duplicates.
+  - C3a: the rows not yet written are lost.
+  - C3: every row was already written, so skipping the batch loses nothing.
+- **The hint under the strip** explains the reordering.
+
+I checked it in Chrome on scenario 2. With "Safeguards on" the strip is in the normal order. "Flip atMostOnce" reorders it as above, and the ⚡C3a tooltip shows the at-most-once recovery line. Tests and the build pass. It applies wherever `atMostOnce` is on: scenario 2's second step, the Sandbox, and crash-test replays.
+
+
+## You · Wed Nov 11, 10:29
+
+a question can arise: how did this system work until now with at most once? we had engineers manually do replays. they'd spend few weeks going through ledger vs oracle, erase all ledger data from some period, and manually replay messages. the manager asked me to improve the replay tool, i instead made sure we dont need to replay again.
+
+
+### Claude · Wed Nov 11, 10:29
+
+That's a strong story, and it answers the question before anyone asks it. I'll add it to RATIONALE and the video script.
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 read
+> 🔧 update
+> 🔧 update
+
+### Claude · Wed Nov 11, 10:30
+
+I added the manual-replay story to both documents.
+
+**RATIONALE** (`ebbb01a`, pushed): a new bullet under "Learnings and iterations", in your voice:
+
+> **How it worked before: manual replays.** Engineers spent a few weeks per incident comparing the ledger against an expected total, erasing the ledger for the affected period, and replaying those messages by hand. I was asked to improve the replay tool; I made replays unnecessary instead. The oracle here is that manual comparison, automated and run after every simulated crash.
+
+The last sentence is mine: it links your story to the demo's oracle. Cut it if you'd rather not make that claim.
+
+**Video script:** the opening story now reads:
+
+> "…every crash silently dropped billable messages. Recovery was manual: engineers spent weeks comparing the ledger to expected totals, erasing a period and replaying it by hand. I was asked to improve the replay tool. Instead, I made replays unnecessary: I ported the pipeline to exactly-once. This prototype distills that protocol…"
+
+That adds about 10 seconds, so the story is now 0:00–0:30. I took the time back from the next two sections: the requirements are now 0:30–0:55 (5 seconds shorter), and the four-rules intro starts at 0:55. Everything from 1:10 onward keeps its timings. [Video script](https://claude.ai/artifact/S9mP7KcxSDW2AJ5JE9LGLD)
+
+
+## You · Wed Nov 11, 10:30
+
+wait, the Commit when flipped is Before the SINK, not before the aggregation etc. have you ever done stream processing before wtf?
+
+
+*[Context limit reached: the session continued from an automatic summary of the conversation so far.]*
+
+> 🔧 Bash: grep -n "atMostOnce\|commitLast" -r packages/engine/src apps/web/src --include=*.ts --include=*.tsx 
+> 🔧 Bash: grep -rn "atMostOnce\|commitLast\|AT_MOST_ONCE" packages/engine/src apps/web/src | grep -v "\.test\.
+> 🔧 Bash: sed -n 150,380p packages/engine/src/worker.ts && sed -n 40,70p packages/engine/src/safeguards.ts
+> 🔧 Bash: grep -rn -i "atMostOnce\|commit before\|commits before\|before processing\|C1-C3\|C1 through\|C1–C3"
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 10:31
+
+You're right: at-most-once commits right before the sink write, after the batch has been processed. I've moved the early commit into the sink step and am updating the tests, UI strip and docs.
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: grep -rln "atMostOnce\|commitLast" packages apps | grep -v node_modules; export PATH=$HOME/.local/no
+
+### Claude · Wed Nov 11, 10:31
+
+Tests pass (132). Next I'm re-running both 2,000-seed crash tests in the background and updating the UI in the meantime.
+
+> 🔧 Bash: grep -n "crash-test" package.json apps/crash-test/package.json; grep -n "argv\|--out\|--p\b\|\"--" a
+> 🔧 Bash: sed -n 19,40p apps/crash-test/src/cli.ts; sed -n 85,110p apps/crash-test/src/cli.ts
+> 🔧 Bash: sed -n 110,130p apps/crash-test/src/cli.ts
+> 🔧 Bash: export PATH=$HOME/.local/node/bin:$PATH && pnpm crash-test -- --seeds 2000 --p 0.05 > $TMPDIR/ct05.l
+> 🔧 Bash: sed -n 60,110p apps/web/src/panels.tsx; sed -n 225,236p apps/web/src/panels.tsx; sed -n 74,100p apps
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 10:32
+
+Now the docs. I'm updating PLAN, RATIONALE and the README, then checking the UI in the browser once the crash-test numbers land.
+
+> 🔧 Bash: sed -n 95,102p PLAN.md; grep -n "atMostOnce\|C3a\|at-most-once" README.md PLAN.md | head -30
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Chrome tabs_context_mcp
+> 🔧 Chrome tabs_create_mcp
+> 🔧 Chrome navigate
+> 🔧 Chrome find
+
+### Claude · Wed Nov 11, 10:32
+
+Checking scenario 2 in the local app with the fix.
+
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Chrome tabs_close_mcp
+
+### Claude · Wed Nov 11, 10:32
+
+I've fixed the bug and the UI is verified. The two 2,000-seed crash-test reruns are still going in the background. Once they finish I'll update the README and RATIONALE numbers, then commit and push.
+
+> 🔧 Bash: sed -n 5,14p results/crash-test.md; sed -n 5,14p results/crash-test-p0.001.md; git diff --stat resul
+
+### Claude · Wed Nov 11, 10:34
+
+Only the `atMostOnce` rows changed. The other configs match their previous output.
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 read
+> 🔧 read
+> 🔧 read
+> 🔧 guide
+> 🔧 update
+
+### Claude · Wed Nov 11, 10:35
+
+Script updated. Now committing and pushing.
+
+> 🔧 Bash: git add -A && git status --short && git commit -q -m "atMostOnce commits right before the sink write
+
+### Claude · Wed Nov 11, 10:35
+
+You're right, and that was my mistake. The `atMostOnce` toggle committed right after Plan, before the batch was even read. An at-most-once streaming job processes the batch first and commits right before the sink write, so a crash during the sink write loses the rest of the batch.
+
+**The fix (`d533f39`, pushed):**
+- **Engine:** the early commit is now at the start of the sink step, after aggregation (`packages/engine/src/worker.ts`). So only a crash halfway through the sink writes (C3a) exposes the bug. A crash at C1 or C2 still replays the batch normally, and at C3 every row is already written. The tests now check that C1, C2a, C2, C3 and C4 stay correct and C3a under-bills. All 132 pass.
+- **UI strip:** the steps now read Plan → Read → Filter → Dedup → Aggregate → **Commit** (red) → Sink ⚡C3a → Expire, and the crash-point tooltips match. I checked scenario 2 locally: flipping the toggle still under-bills by $0.06.
+- **Crash tests:** I re-ran both 2,000-seed runs. Only the `atMostOnce` rows changed:
+
+| Crash rate | Failed seeds | Under-billed | Over-billed |
+| --- | --- | --- | --- |
+| p = 0.05 | 2000 / 2000 | $3,036.09 (was $16,778) | $0 (was $0.24) |
+| p = 0.001 | 61% (was 97%) | $59.12 | $0 |
+
+  The over-billing was a side effect of committing too early, so I deleted that finding from RATIONALE.
+- **Docs:** PLAN, the README table and RATIONALE are updated. RATIONALE now admits the toggle first committed in the wrong place.
+- **Video script:** the scenario 2 line now says "commit right before the sink write, where the old pipeline checkpointed". The crash-test line now says at-most-once "breaks 61% of runs" instead of 97%.
+
+
+## You · Wed Nov 11, 11:41
+
+is the walkthrough updated? with the story? the video speech?
+
+> 🔧 Bash: git log --oneline -3 && grep -n -i "walkthrough\|ShardNotOwner\|replay tool\|by hand\|before process
+> 🔧 read
+> 🔧 Bash: grep -rn "130" README.md PLAN.md docs/RATIONALE.md | grep -i test
+> 🔧 Bash: sed -i '' 's/+ 130 tests/+ 132 tests/' README.md && sed -i '' 's/\*\*Unit tests\*\* (130)/**Unit tes
+
+### Claude · Wed Nov 11, 11:42
+
+Yes, the script, the in-app walkthrough and the live site are all updated. I re-read the script just now, and your only edits since mine were ticking the four "Before recording" boxes.
+
+**Video speech** ([script](https://claude.ai/artifact/S9mP7KcxSDW2AJ5JE9LGLD)):
+- **Story (0:00–0:30):** covers the ShardNotOwner crashes and then the manual recovery: weeks of comparing the ledger to expected totals, erasing a period and replaying by hand. It ends with "I was asked to improve the replay tool. Instead, I made replays unnecessary."
+- **Scenario 2 flip:** now says "Now commit right before the sink write, where the old pipeline checkpointed." It still ties back to the story: "This is exactly what those ShardNotOwner crashes were costing us."
+- **Crash test:** says at-most-once "breaks 61% of runs", the number from the re-run.
+
+**In-app walkthrough** (what you click through on camera):
+- Scenario 2's title is now "At-most-once: commit before the sink write". Its summary and the red Commit box between Aggregate and Sink match the fix.
+- The live site rebuilds on every push to main, so it already has this.
+- The app itself doesn't tell the Meta story; you say that part in the video.
+
+**RATIONALE:** the ShardNotOwner and manual-replay bullets are both under "Learnings and iterations".
+
+I also corrected the test count in the README and RATIONALE from 130 to 132 (`19e5da3`, pushed).
+
+One possible addition: scenario 2's spoken lines don't mention the manual replays yet. You could add something like "Before, we'd find this weeks later by hand; here the oracle catches it immediately." Tell me if you want it in the script.
+
+
+## You · Wed Nov 11, 12:07
+
+we can/should ditch the safeguard Dedup by messageId , that was there before my exactly once fix, no? ideally i'd see 4 safeguards (from the 4 rules, no?)
+
+
+### Claude · Wed Nov 11, 12:07
+
+Agreed: dedup by messageId was already in the at-most-once pipeline, so it isn't one of your rules. `restampReplay` isn't one of the four rules either; it's a supporting rule, and with dedup before sink it gives the same result as `dedupIgnoresBatchId`. Cutting both leaves exactly one toggle per rule. I'm going ahead with that.
+
+> 🔧 Bash: grep -rn "noDedupStore\|dedupStore\|restampReplay\|replayKeepsBatchId\|useDedup\|six\|Six\|6 toggles
+> 🔧 Bash: sed -n 1,40p packages/engine/src/safeguards.ts; sed -n 60,125p packages/engine/src/safeguards.ts; se
+
+### Claude · Wed Nov 11, 12:07
+
+Editing the engine, tests and UI now.
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Wed Nov 11, 12:08
+
+Checks pass with 126 tests; six went with the two toggles. Updating the UI text and docs, then re-running the crash test.
+
+> 🔧 Bash: sed -i '' 's/with all six on, no crash changes the bill/with all four on, no crash changes the bill/
+> 🔧 Bash: grep -rn "seed-runs" apps/web/src | head -3; export PATH=$HOME/.local/node/bin:$PATH && (pnpm crash-
+> 🔧 Bash: sed -n 97,108p PLAN.md; sed -n 150,155p PLAN.md; sed -n 9,20p docs/RATIONALE.md; sed -n 24,44p READM
+
+### Claude · Wed Nov 11, 12:08
+
+I'm also putting the toggles in rule order (1 plan, 2 dedup batch id, 3 CAS, 4 commit last) so the UI and tables match RATIONALE. That means restarting the crash-test run.
+
+> 🔧 Bash: pkill -f "apps/crash-test/src/cli.ts"; sleep 1; pkill -f "apps/crash-test/src/cli.ts"; python3 - <<'
+> 🔧 Bash: export PATH=$HOME/.local/node/bin:$PATH && pnpm crash-test -- --seeds 2000 --p 0.05 > $TMPDIR/ct05.l
+
+### Claude · Wed Nov 11, 12:08
+
+Writing the doc changes while that runs. The four remaining configs' numbers don't depend on the toggle order.
+
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 update
+
+### Claude · Wed Nov 11, 12:09
+
+Script updated. Waiting on the crash-test run, then I'll check the UI and commit.
+
+> 🔧 Chrome browser_batch
+> 🔧 Chrome tabs_context_mcp
+> 🔧 Bash: cd ~/workspace/ant-takehome-2026/apps/web && PATH=$HOME/.local/node/bin:$PATH pnpm exec vite --host 
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+
+### Claude · Wed Nov 11, 12:09
+
+The UI now shows four safeguards, in order: Replay reads its plan, Dedup knows its own batch, Compare-and-set sink, Commit last. The crash-test rerun is still going; I'll commit when it finishes.
+
+> 🔧 Chrome tabs_close_mcp
+
+### Claude · Wed Nov 11, 12:09
+
+Waiting for the 2,000-seed runs to finish.
+
+
+## You · Wed Nov 11, 12:09
+
+commiteed? can i try it out?
+
+> 🔧 Bash: cat /private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takehome-2026/41996019-dc1c-4211-8
+> 🔧 Bash: sed -n 7,12p results/crash-test.md && git add -A -- . ':!results/crash-test-p0.001.*' && git commit 
+
+### Claude · Wed Nov 11, 12:10
+
+Yes, it's committed and pushed (`2bf68aa`). You can try it now on the local dev server at http://127.0.0.1:5180/. The live site at https://q820.github.io/exactly-once-billing/ will have it once the Pages deploy finishes, usually a minute or two.
+
+- **Safeguards:** the panel now has four, one per rule, in the order RATIONALE lists them: Replay reads its plan, Dedup knows its own batch, Compare-and-set sink, Commit last. Dedup by messageId and replays keeping their batch id are always on now; RATIONALE explains why they're no longer toggles. 126 tests pass, down from 132 because six tested the two removed toggles.
+- **In-browser crash test:** it now runs 2,500 seed-runs (500 seeds × 5 configs). I changed the video script's click line to match.
+- **Docs:** I updated the README table, PLAN and RATIONALE.
+
+**Crash-test results:**
+- **p = 0.05:** this run is done and committed. All safeguards on still fails 0 of 2,000 seeds. The four remaining toggles match their earlier results.
+- **p = 0.001:** this run is still going, so `results/crash-test-p0.001.*` isn't updated yet. I expect the same numbers and will commit those files when it finishes.
+
+> 🔧 Bash: sed -n 7,12p results/crash-test-p0.001.md && git add results && git commit -qm "Crash test p=0.001: 
+
+### Claude · Wed Nov 11, 12:10
+
+The p = 0.001 run finished, and everything is committed and pushed (`026e280`). With all four safeguards on, 0 of 2,000 seeds failed. Each toggle's numbers are the same as before, so the README table didn't need changes.
+
+Both CI and the Pages deploy passed for the four-safeguard commit, so the live site at https://q820.github.io/exactly-once-billing/ now shows the four safeguards. If the old version still appears, hard-refresh the page.
+
+
+## You · Wed Nov 11, 12:14
+
+can the 4 scenarios then be ordered by the same safeguard order? so it's easier for me presenting
+
+> 🔧 Bash: grep -n "title:\|id: \"" apps/web/src/scenarios.ts; grep -rn "scenario\b\|SCENARIOS\[" apps/web/src/
+> 🔧 Bash: sed -n 55,60p apps/web/src/scenarios.ts; sed -n 120,160p apps/web/src/scenarios.ts
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: sed -i '' 's/label: "Flip dedupIgnoresBatchId and replay"/label: "Flip dedupIgnoresBatchId"/; s/labe
+
+### Claude · Wed Nov 11, 12:14
+
+Next I'm reordering the video script to match. That needs the scenario 2 amount, so I'm checking it in the browser.
+
+> 🔧 Chrome tabs_context_mcp
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Chrome browser_batch
+> 🔧 Chrome find
+
+### Claude · Wed Nov 11, 12:15
+
+Scenario 2's flip under-bills $0.0155. Committing the app change, then reordering the video script.
+
+> 🔧 Bash: git add -A && git commit -qm "Scenarios follow the rule order: 2 shrinking replay (rule 1), 3 dedup 
+> 🔧 Chrome tabs_close_mcp
+> 🔧 read
+> 🔧 update
+> 🔧 read
+
+### Claude · Wed Nov 11, 12:16
+
+Yes, I've reordered them so scenarios 2–5 follow the safeguard order, one rule each. The app change is committed and pushed (`50c6de7`), and the live site will have it once the Pages deploy finishes:
+
+1. Normal day
+2. The shrinking replay (rule 1, `nondeterministicBatches`)
+3. Crash after dedup, before sink (rule 2, `dedupIgnoresBatchId`)
+4. At-least-once (rule 3, `atLeastOnce`)
+5. At-most-once (rule 4, `atMostOnce`)
+6. Sandbox
+7. Crash test
+
+**Changes in the app:**
+- **Same two steps everywhere:** the shrinking replay now opens with a green "Safeguards on" step like the others, so every rule scenario is "1. Safeguards on" then "2. Flip <toggle>". The automated scenario check confirms the new green step (127 tests pass).
+- **Shorter step labels:** I dropped "and replay" from two of them, so they're just "Flip dedupIgnoresBatchId" and "Flip atLeastOnce".
+- **PLAN.md:** its scenario list matches the new order.
+
+**Video script** ([link](https://claude.ai/artifact/S9mP7KcxSDW2AJ5JE9LGLD)) now follows the same order:
+- **1:10–1:40, new shrinking-replay section:** the flip shows Under-billed $0.02 (the app shows $0.0155). It closes on your production gotcha: write the plan before reading, and replay exactly that range. I moved the "name the panels as you go" instruction here, since this is now the first scenario you show.
+- **1:40–2:15:** rule 2, the dedup batch id.
+- **2:15–2:50:** rule 3, at-least-once.
+- **2:50–3:35:** rule 4, at-most-once. It now comes last, so it ties back to the opening story about ShardNotOwner. I moved the closing contrast here: "at-least-once charges customers twice, at-most-once loses our money, and exactly-once needs all four rules."
+- **3:35–4:25:** the crash test, now 50 seconds instead of 60 to make room.
+- **"If you run long":** cut scenarios 2 and 3 to their flips; keep 4 and 5, which show both failure directions.
+
+
+## You · Wed Nov 11, 12:16
+
+i meant in the dropdown
+
+> 🔧 Bash: gh run list --limit 2 && curl -s https://q820.github.io/exactly-once-billing/ | grep -o 'assets/inde
+> 🔧 Bash: cd /tmp && js=$(curl -s https://q820.github.io/exactly-once-billing/ | grep -oE 'assets/index-[A-Za-
+> 🔧 Bash: curl -s "https://q820.github.io/exactly-once-billing/assets/index-BV8rO0oo.js" | grep -oE '[0-9]\. (
+
+### Claude · Wed Nov 11, 12:16
+
+The dropdown on the live site is already in that order. The deploy finished at 20:16 UTC, and the published bundle lists:
+
+1. Normal day
+2. The shrinking replay (rule 1)
+3. Crash after dedup, before sink (rule 2)
+4. At-least-once: crash after sink, before commit (rule 3)
+5. At-most-once: commit before the sink write (rule 4)
+6. Sandbox
+7. Crash test
+
+If you still see the old order, hard-refresh with Cmd+Shift+R; the browser is probably serving the cached old bundle.
+
+I also reordered the video script to follow the dropdown. If you only wanted the dropdown changed, I can put the script back to its previous order.
+
+
+## You · Wed Nov 11, 12:17
+
+wgat is the reccover box?
+
+
+### Claude · Wed Nov 11, 12:17
+
+The Recover box is the first step of every worker that has just started or restarted after a crash. It only appears while that step is next, which is why it comes and goes.
+
+**What it does:**
+1. Bumps the partition's epoch, so the restarted worker's new batches get a new BatchId.
+2. Compares the partition's last plan with its last commit.
+3. If a plan has no commit (the previous worker crashed mid-batch), it replays that plan with its original BatchId and offset range. The worker then goes straight to Read and skips Plan.
+4. If the last plan was committed, there's nothing to replay, and the worker continues to Plan for the next batch.
+
+It runs before Plan and has no crash point (⚡) of its own.
+
+You'll also see it at the very start of a run, before any crash, because every worker begins there. The first epochs go from 0 to 1 and there's no plan to replay. That can look like a recovery even though nothing went wrong.
+
+If that's confusing on camera, I could show it only after a crash, or label it "Recover (restart)". Want either of those?
+
+
+## You · Wed Nov 11, 12:18
+
+it's the same as plan, no? abstracted in 1
+
+> 🔧 Bash: sed -n 205,232p apps/web/src/panels.tsx; grep -n "C1: {" -A4 apps/web/src/panels.tsx
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Chrome tabs_context_mcp
+> 🔧 Chrome browser_batch
+
+### Claude · Wed Nov 11, 12:18
+
+The Recover box is gone and Plan is highlighted at the start. Committing.
+
+> 🔧 Chrome tabs_close_mcp
+> 🔧 Bash: git commit -qam "Strip: fold the Recover box into Plan (an uncommitted plan is reused after a restar
+
+### Claude · Wed Nov 11, 12:18
+
+Yes, it's the same step, so the strip now shows a single Plan box. Plan fixes a batch's offset range and BatchId. After a restart, the worker reuses the uncommitted plan (same range, same BatchId) instead of writing a new one.
+
+- **Strip:** there's no separate Recover box any more. Plan is highlighted whenever the worker is about to recover, including at the very start of a run. Hovering Plan explains the replay case. I checked it on the local server.
+- **Engine:** recovery is still its own step there. Merging the two would shift the step schedule, and every crash-test number would change.
+- **Status:** committed and pushed (`ee4d11c`), and 127 tests pass. The live site updates in about a minute.
+
+
+## You · Wed Nov 11, 12:20
+
+is it up?
+
+> 🔧 Bash: gh run list --limit 2; js=$(curl -s https://q820.github.io/exactly-once-billing/ | grep -oE 'assets/
+
+### Claude · Wed Nov 11, 12:20
+
+Not yet. The deploy has been queued on GitHub for about 2 minutes, so the live site still has the old strip. I'll watch it and tell you when it's live.
+
+> 🔧 Bash: until s=$(gh run view 43095273649 --json status,conclusion -q '.status+" "+.conclusion' 2>/dev/null)
+
+### Claude · Wed Nov 11, 12:20
+
+The local dev server at http://127.0.0.1:5180/ already has the change if you want to look before the deploy finishes.
+
+
+## You · Wed Nov 11, 12:23
+
+wahts taking the deploy up?
+
+> 🔧 Bash: gh run list --limit 4 --json databaseId,name,status,conclusion,createdAt,startedAt,headSha -q '.[]|[
+
+### Claude · Wed Nov 11, 12:23
+
+Nothing on our side; it's waiting for GitHub to give it a machine to run on. Both runs for `ee4d11c` (CI and Deploy) have been queued since 20:18:54 UTC, about 4½ minutes, and neither job has started. They aren't waiting on each other or hitting an error.
+
+The previous push deployed within a minute, and GitHub's status page says all systems are operational, so this looks like a temporary backlog. I'm still watching the run and will tell you as soon as it's live. If it's still queued in a few minutes, I'll cancel it and re-run it.
+
+
+## You · Wed Nov 11, 12:44
+
+ok. i have the video, it's on my desktop. let's submit.
+
+> 🔧 Bash: ls -lt ~/Desktop | head -15; cat /private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takeh
+> 🔧 Bash: mdls -name kMDItemDurationSeconds -name kMDItemPixelHeight -name kMDItemPixelWidth ~/Desktop/"2026-1
+
+### Claude · Wed Nov 11, 12:44
+
+The video runs 9 min 24 s, almost twice the ~5 minutes the brief asks for. The deploy is also still stuck in the queue after 15 minutes, so I'm cancelling it and re-running it.
+
+> 🔧 Bash: gh run cancel 43095273649; gh run cancel 43095273660; sleep 5; gh run rerun 43095273649 && gh run re
+> 🔧 Asked: The video (~/Desktop/2026-11-11 12-24-38.mov) is 149 MB and 9 min 24 s long, nearly double the ~5 min the brief asks for. Where should it be hosted so the submission can link to it? / The video is 9:24 and the brief says about 5 minutes. Submit it as is?
+> 🔧 Your answer: The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.
+
+## You · Wed Nov 11, 12:49
+
+[Request interrupted by user for tool use]
+
+
+## You · Wed Nov 11, 12:49
+
+help me fill 
+
+
+A link to your working prototype (hosted anywhere)
+GitHub repo link with your code
+Design rationale - Both a ~5 minute self-recorded video and a short written doc explaining your approach and what makes it novel, key design decisions and tradeoffs, learnings, and iterations
+Claude/AI transcripts - We expect you to use AI tools during development! Share your interaction history from Claude Code, Claude.ai, or other tools you used
+
+
+### Claude · Wed Nov 11, 12:49
+
+I'll refresh the Claude Code transcript first so it includes today's work, then give you the answers to paste.
+
+> 🔧 Bash: S=/private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takehome-2026/41996019-dc1c-4211-8ef
+
+### Claude · Wed Nov 11, 12:49
+
+The script that converts the transcript was lost from the scratchpad, so I'm rewriting it.
+
+> 🔧 Bash: sed -n 1,40p docs/transcripts/claude-code-session.md; wc -l docs/transcripts/claude-code-session.md;
+> 🔧 Bash: grep -o "^> 🔧 [A-Za-z_:-]*" docs/transcripts/claude-code-session.md | sort | uniq -c | sort -rn | he
+> 🔧 Bash: grep -n -m6 "🔧 Chrome\|🔧 update\|🔧 Asked\|🔧 Your\|🔧 Skill\|🔧 Monitor\|🔧 read\|🔧 guide\|🔧 batch\|🔧 Ta
+> 🔧 Bash: cd ~/.claude/projects/-Users-maricel-mihalcea-workspace-ant-takehome-2026/ && python3 - <<'EOF'
+> 🔧 Bash: cd ~/.claude/projects/-Users-maricel-mihalcea-workspace-ant-takehome-2026/ && python3 - <<'EOF'
