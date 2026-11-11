@@ -359,6 +359,9 @@ button.link {
   position: relative;
   z-index: 3;
 }
+.seed-input {
+  width: 11ch;
+}
 .random-crashes {
   display: flex;
   flex-wrap: wrap;

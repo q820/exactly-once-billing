@@ -69,6 +69,12 @@ export function App() {
     setModified(true);
   };
   const changeSafeguards = (s: Safeguards) => changeSpec({ safeguards: s });
+  /** A new run seed is a new workload: start over rather than replaying to the current time. */
+  const changeRunSeed = (seed: number) => {
+    setPlaying(false);
+    setCtrl(new Controller({ ...ctrl.spec, seed, crashes: ctrl.replayCrashes() }));
+    setModified(true);
+  };
 
   const replaySame = () => {
     const reroll = editable && rerollOnRestart && ctrl.spec.crashProbability > 0;
@@ -114,10 +120,16 @@ export function App() {
         </select>
         {!isCrashTest ? (
           <>
-            <span className="mono muted">
-              seed {ctrl.spec.seed}
-              {ctrl.spec.crashProbability > 0 ? ` · crash seed ${ctrl.spec.crashSeed ?? ctrl.spec.seed}` : ""}
-            </span>
+            {editable ? (
+              <label className="muted" title="Decides the traffic: messages, duplicates, late events, timing, restart delays. A new seed starts over.">
+                seed <SeedInput key={ctrl.spec.seed} value={ctrl.spec.seed} onCommit={changeRunSeed} />
+              </label>
+            ) : (
+              <span className="mono muted">
+                seed {ctrl.spec.seed}
+                {ctrl.spec.crashProbability > 0 ? ` · crash seed ${ctrl.spec.crashSeed ?? ctrl.spec.seed}` : ""}
+              </span>
+            )}
             <button className="primary" onClick={() => setPlaying(!playing)} disabled={status.drained}>
               {playing ? "Pause" : "Play"}
             </button>
@@ -215,6 +227,17 @@ export function App() {
                   </label>
                   {ctrl.spec.crashProbability > 0 ? (
                     <>
+                      <label className="muted" title="Decides where random crashes hit. Same traffic and the same correct bill, different crashes.">
+                        crash seed{" "}
+                        <SeedInput
+                          key={ctrl.spec.crashSeed ?? ctrl.spec.seed}
+                          value={ctrl.spec.crashSeed ?? ctrl.spec.seed}
+                          onCommit={(v) => {
+                            setRerollOnRestart(false); // a seed typed on purpose should survive Restart
+                            changeSpec({ crashSeed: v });
+                          }}
+                        />
+                      </label>
                       <button onClick={() => changeSpec({ crashSeed: newCrashSeed() })} title="Same workload, different random crashes">
                         New crash seed
                       </button>
@@ -246,6 +269,40 @@ export function App() {
         Late rows: half-hour buckets before {new Date(halfHour(start) * 1_800_000).toISOString().slice(0, 16)}Z. Money is integer micros.
       </footer>
     </div>
+  );
+}
+
+const MAX_SEED = 2 ** 32 - 1;
+
+/** A seed box: edit freely, apply on Enter or blur, Escape reverts. Invalid input reverts too. */
+function SeedInput(props: { value: number; onCommit: (v: number) => void }) {
+  const [text, setText] = useState(String(props.value));
+  const cancelled = useRef(false);
+  const commit = () => {
+    if (cancelled.current) {
+      cancelled.current = false;
+      setText(String(props.value));
+      return;
+    }
+    const v = Number(text.trim());
+    if (Number.isInteger(v) && v >= 0 && v <= MAX_SEED && v !== props.value) props.onCommit(v);
+    else setText(String(props.value));
+  };
+  return (
+    <input
+      className="mono seed-input"
+      inputMode="numeric"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Escape") {
+          cancelled.current = true;
+          e.currentTarget.blur();
+        }
+      }}
+    />
   );
 }
 
