@@ -61,7 +61,7 @@ export const SCENARIOS: readonly Scenario[] = [
     id: "normal",
     title: "1. Normal day",
     summary:
-      "Duplicates from multi-device delivery and infra retries, plus phones that come online days late. No crashes. Every duplicate is filtered and late events land in their old half-hour buckets.",
+      "Duplicates from multi-device delivery and infra retries, plus phones that come online days late. No crashes. Every duplicate is filtered, late events land in their old half-hour buckets, and the rare message sent more than 30 days before it arrived goes to the DropLog instead of the bill.",
     steps: [
       {
         label: "Run",
@@ -158,24 +158,8 @@ export const SCENARIOS: readonly Scenario[] = [
     ],
   },
   {
-    id: "phone",
-    title: "6. The phone that came back",
-    summary:
-      "A delivery from a phone that was offline for about three weeks lands in its three-week-old bucket through the normal path. A message sent more than 30 days before it was appended goes to the DropLog instead of the bill.",
-    steps: [
-      {
-        label: "Run",
-        narration: "Open the late message and the dropped one in the inspector. Both decisions use only record time, so a replay decides the same way.",
-        spec: spec(),
-        expect: "green",
-        focusPartition: 0,
-      },
-    ],
-    spotlight: "late",
-  },
-  {
     id: "sandbox",
-    title: "7. Sandbox",
+    title: "6. Sandbox",
     summary:
       "Free play on the same seed: arm crashes by clicking ⚡ on any partition's pipeline, and turn safeguards off to see which billing error each one prevents.",
     steps: [
@@ -191,7 +175,7 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: "crash-test",
-    title: "8. Crash test",
+    title: "7. Crash test",
     summary:
       "500 seeds with random crashes at every crash point, run in Web Workers: all safeguards on, then each toggle on its own.",
     steps: [

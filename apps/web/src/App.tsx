@@ -81,7 +81,7 @@ export function App() {
   const suggestions = useMemo(() => {
     const out: { label: string; ids: string[] }[] = [];
     const w = ctrl.sim.workload;
-    if (scenario.spotlight === "late" || scenario.id === "phone") {
+    if (scenario.spotlight === "late") {
       const late = [...w.kindOf].filter(([, k]) => k === "late").map(([m]) => m);
       const lag = (m: string) => {
         const e = w.events.find((x) => x.messageId === m)!;
