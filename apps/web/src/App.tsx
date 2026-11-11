@@ -124,12 +124,7 @@ export function App() {
               <label className="muted" title="Decides the traffic: messages, duplicates, late events, timing, restart delays. A new seed starts over.">
                 seed <SeedInput key={ctrl.spec.seed} value={ctrl.spec.seed} onCommit={changeRunSeed} />
               </label>
-            ) : (
-              <span className="mono muted">
-                seed {ctrl.spec.seed}
-                {ctrl.spec.crashProbability > 0 ? ` · crash seed ${ctrl.spec.crashSeed ?? ctrl.spec.seed}` : ""}
-              </span>
-            )}
+            ) : null}
             <button className="primary" onClick={() => setPlaying(!playing)} disabled={status.drained}>
               {playing ? "Pause" : "Play"}
             </button>
@@ -309,9 +304,8 @@ function SeedInput(props: { value: number; onCommit: (v: number) => void }) {
 function describeSpec(spec: RunSpec): string {
   const off = activeToggles(spec.safeguards);
   return [
-    `Seed ${spec.seed}.`,
     off.length ? `Safeguards off: ${off.join(", ")}.` : "All safeguards on.",
-    spec.crashProbability ? `Random crashes with p = ${spec.crashProbability} at every crash point (crash seed ${spec.crashSeed ?? spec.seed}).` : "",
+    spec.crashProbability ? `Random crashes with p = ${spec.crashProbability} at every crash point.` : "",
     spec.crashes.length ? `Scripted crashes: ${spec.crashes.map((c) => `P${c.partition} batch ${c.batchIdx} at ${c.point}`).join(", ")}.` : "",
   ]
     .filter(Boolean)
