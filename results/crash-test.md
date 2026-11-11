@@ -5,55 +5,33 @@
 | Config | Seeds | Failed seeds | Over-billed | Under-billed | Invariant violations | Crashes injected | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | all safeguards on | 2000 | 0 (0%) | $0.00 | $0.00 | 0 | 746,507 | pass |
-| `atMostOnce` | 2000 | 2000 (100%) | $0.00 | $3,036.09 | 0 | 689,724 | pass |
-| `noDedupStore` | 2000 | 2000 (100%) | $27,536.39 | $0.00 | 0 | 764,192 | pass |
-| `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `nondeterministicBatches` | 2000 | 2000 (100%) | $0.00 | $489.88 | 0 | 636,117 | pass |
+| `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `atLeastOnce` | 2000 | 2000 (100%) | $8,386.32 | $0.00 | 0 | 746,507 | pass |
-| `restampReplay` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
+| `atMostOnce` | 2000 | 2000 (100%) | $0.00 | $3,036.09 | 0 | 689,724 | pass |
 
 Verdict: "all safeguards on" passes with 0 failed seeds; each break-it toggle passes when it fails at least one seed.
 
 ## First failing seed per toggle
 
-### `atMostOnce`: seed 1
+### `nondeterministicBatches`: seed 1
 
-under-billed $1.10; 83 ledger rows differ; 340 crashes in the run.
-
-```
-1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526
-1790812980900 P4 CRASH C2a (1,3) restartAt=1790812996769
-1790812981000 P0 CRASH C3 (1,3) restartAt=1790812994034
-1790812997069 P4 CRASH C3 (1,3) replay restartAt=1790813004882
-1790813004982 P4 CRASH C1 (3,4) restartAt=1790813018289
-1790813041100 P3 CRASH C1 (1,4) restartAt=1790813060681
-1790813041250 P6 CRASH C2 (1,4) restartAt=1790813051180
-1790813041350 P1 CRASH C3 (1,4) restartAt=1790813049208
-1790813079189 P4 CRASH C2a (4,6) restartAt=1790813100422
-1790813109958 P1 CRASH C4 (2,6) restartAt=1790813139252
-1790813112180 P6 CRASH C3 (2,6) restartAt=1790813140006
-1790813139602 P1 CRASH C3 (3,7) restartAt=1790813147403
-... 328 more
-```
-
-### `noDedupStore`: seed 1
-
-over-billed $13.20; 282 ledger rows differ; 375 crashes in the run.
+under-billed $0.16; 11 ledger rows differ; 316 crashes in the run.
 
 ```
 1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526
 1790812980900 P4 CRASH C2a (1,3) restartAt=1790812996769
 1790812981000 P0 CRASH C3 (1,3) restartAt=1790812994034
-1790812994684 P0 CRASH C3 (2,4) restartAt=1790813002497
-1790812996969 P4 CRASH C2a (1,3) replay restartAt=1790813010276
-1790813010476 P4 CRASH C2 (1,3) replay restartAt=1790813030057
-1790813030707 P4 CRASH C3a (4,4) restartAt=1790813040637
-1790813040937 P4 CRASH C3 (4,4) replay restartAt=1790813048795
-1790813101450 P1 CRASH C1 (1,5) restartAt=1790813122683
-1790813109445 P4 CRASH C3 (6,5) restartAt=1790813138739
-1790813122883 P1 CRASH C2 (1,5) replay restartAt=1790813150709
-1790813151359 P1 CRASH C3a (3,6) restartAt=1790813159160
-... 363 more
+1790812997119 P4 CRASH C4 (1,3) replay restartAt=1790813004932
+1790813041100 P1 CRASH C1 (1,4) restartAt=1790813054407
+1790813041350 P3 CRASH C3a (1,4) restartAt=1790813060931
+1790813041400 P7 CRASH C4 (1,4) restartAt=1790813051330
+1790813051680 P7 CRASH C3 (2,5) restartAt=1790813059538
+1790813112226 P2 CRASH C3a (2,5) restartAt=1790813133459
+1790813121581 P3 CRASH C3 (2,5) restartAt=1790813150875
+1790813133659 P2 CRASH C2 (2,5) replay restartAt=1790813161485
+1790813162135 P2 CRASH C3a (4,6) restartAt=1790813169936
+... 304 more
 ```
 
 ### `dedupIgnoresBatchId`: seed 1
@@ -76,26 +54,6 @@ under-billed $5.07; 221 ledger rows differ; 358 crashes in the run.
 ... 346 more
 ```
 
-### `nondeterministicBatches`: seed 1
-
-under-billed $0.16; 11 ledger rows differ; 316 crashes in the run.
-
-```
-1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526
-1790812980900 P4 CRASH C2a (1,3) restartAt=1790812996769
-1790812981000 P0 CRASH C3 (1,3) restartAt=1790812994034
-1790812997119 P4 CRASH C4 (1,3) replay restartAt=1790813004932
-1790813041100 P1 CRASH C1 (1,4) restartAt=1790813054407
-1790813041350 P3 CRASH C3a (1,4) restartAt=1790813060931
-1790813041400 P7 CRASH C4 (1,4) restartAt=1790813051330
-1790813051680 P7 CRASH C3 (2,5) restartAt=1790813059538
-1790813112226 P2 CRASH C3a (2,5) restartAt=1790813133459
-1790813121581 P3 CRASH C3 (2,5) restartAt=1790813150875
-1790813133659 P2 CRASH C2 (2,5) replay restartAt=1790813161485
-1790813162135 P2 CRASH C3a (4,6) restartAt=1790813169936
-... 304 more
-```
-
 ### `atLeastOnce`: seed 1
 
 over-billed $4.21; 196 ledger rows differ; 372 crashes in the run.
@@ -116,23 +74,23 @@ over-billed $4.21; 196 ledger rows differ; 372 crashes in the run.
 ... 360 more
 ```
 
-### `restampReplay`: seed 1
+### `atMostOnce`: seed 1
 
-under-billed $5.07; 221 ledger rows differ; 358 crashes in the run.
+under-billed $1.10; 83 ledger rows differ; 340 crashes in the run.
 
 ```
 1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526
-1790812980900 P5 CRASH C2a (1,3) restartAt=1790812996769
-1790812981000 P1 CRASH C3 (1,3) restartAt=1790812994034
-1790812997069 P5 CRASH C3a (2,3) replay restartAt=1790813004882
-1790813005082 P5 CRASH C2 (3,3) replay restartAt=1790813018389
-1790813041100 P6 CRASH C1 (1,4) restartAt=1790813060681
-1790813041250 P7 CRASH C2 (1,4) restartAt=1790813051180
-1790813041350 P3 CRASH C3 (1,4) restartAt=1790813049208
-1790813061331 P6 CRASH C3 (2,5) restartAt=1790813082564
-1790813110108 P3 CRASH C2a (2,6) restartAt=1790813139402
-1790813112180 P7 CRASH C3 (2,6) restartAt=1790813140006
-1790813140556 P7 CRASH C2 (3,7) restartAt=1790813148357
-... 346 more
+1790812980900 P4 CRASH C2a (1,3) restartAt=1790812996769
+1790812981000 P0 CRASH C3 (1,3) restartAt=1790812994034
+1790812997069 P4 CRASH C3 (1,3) replay restartAt=1790813004882
+1790813004982 P4 CRASH C1 (3,4) restartAt=1790813018289
+1790813041100 P3 CRASH C1 (1,4) restartAt=1790813060681
+1790813041250 P6 CRASH C2 (1,4) restartAt=1790813051180
+1790813041350 P1 CRASH C3 (1,4) restartAt=1790813049208
+1790813079189 P4 CRASH C2a (4,6) restartAt=1790813100422
+1790813109958 P1 CRASH C4 (2,6) restartAt=1790813139252
+1790813112180 P6 CRASH C3 (2,6) restartAt=1790813140006
+1790813139602 P1 CRASH C3 (3,7) restartAt=1790813147403
+... 328 more
 ```
 

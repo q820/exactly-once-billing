@@ -338,7 +338,7 @@ export function SafeguardsPanel(props: { safeguards: Safeguards; onChange: ((s: 
         Safeguards <span className="muted">· the rules that make recovery exactly-once</span>
       </h2>
       <p className="hint">
-        Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all six on, no crash changes the bill.{" "}
+        Crashes (⚡ in the pipeline) are the failure. Safeguards are the defence: with all four on, no crash changes the bill.{" "}
         {props.onChange
           ? "Uncheck one to see the billing error it prevents; the same seed and crashes replay up to the current time."
           : "Set by this step: the step buttons above flip them. Open the Sandbox scenario to change them yourself."}

@@ -67,8 +67,6 @@ export interface Delta {
 }
 
 export interface FilterOptions {
-  /** Safeguard `dedupStore`. Off: no dedup at all, not even within the batch. */
-  readonly useDedup?: boolean;
   /** Safeguard `dedupChecksBatchId`. Off: any existing entry counts as a duplicate. */
   readonly checkBatchId?: boolean;
 }
@@ -94,7 +92,6 @@ export function filterBatch(
   dedupGet: (messageId: string) => DedupEntry | undefined,
   opts: FilterOptions = {},
 ): FilterResult {
-  const useDedup = opts.useDedup ?? true;
   const checkBatchId = opts.checkBatchId ?? true;
   const kept: LogRecord[] = [];
   const duplicates: LogRecord[] = [];
@@ -103,10 +100,6 @@ export function filterBatch(
   for (const rec of records) {
     if (isPastRetention(rec)) {
       dropped.push(rec);
-      continue;
-    }
-    if (!useDedup) {
-      kept.push(rec); // break-it: no dedup, every copy is billed
       continue;
     }
     const entry = dedupGet(rec.messageId);
@@ -231,11 +224,6 @@ export class Worker {
     const commit = this.log.lastCommit();
     if (plan && (!commit || compareBatchId(plan.id, commit.id) > 0)) {
       this.plan = plan; // never re-stamped with the new epoch
-      if (!this.sg.replayKeepsBatchId) {
-        // break-it: the replay takes the new epoch
-        this.plan = { ...this.plan, id: { epoch, idx: plan.id.idx } };
-        this.log.writePlan(this.plan);
-      }
       if (!this.sg.deterministicBatches) {
         // break-it: ignore the planned range; read whatever is available, up to a random size
         const logEnd = this.stores.source.endOffset(this.partition);
@@ -285,7 +273,6 @@ export class Worker {
   private filter(): StepResult {
     const plan = this.currentPlan();
     const { kept, duplicates, dropped } = filterBatch(this.records, plan.id, (m) => this.dedup.get(m), {
-      useDedup: this.sg.dedupStore,
       checkBatchId: this.sg.dedupChecksBatchId,
     });
     for (const rec of dropped) {
@@ -315,7 +302,6 @@ export class Worker {
     let written = 0;
     for (const [i, rec] of this.kept.entries()) {
       if (i === half) this.crashPoint("C2a");
-      if (!this.sg.dedupStore) continue; // break-it: no dedup writes
       if (this.dedup.putIfAbsent(rec.messageId, { id, seenAt: rec.appendedAt })) written++;
     }
     this.advance("writeDedup");

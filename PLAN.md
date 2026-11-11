@@ -97,14 +97,12 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
-| `atMostOnce`: commit before the sink writes | Crash at C3a | Under-billed. The batch is skipped on restart, so the rows not yet written are lost (at C3 every row is already written, so nothing is lost) | Why committing before the sink write loses revenue |
-| `noDedupStore`: no dedup, every copy is billed | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
-| `dedupIgnoresBatchId`: any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
-| `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
-| `atLeastOnce`: add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
-| `restampReplay`: replay uses the new epoch | Crash at C2 or C3a | Under-billed. Entries from the first attempt now look older than the replay, so they're treated as duplicates | Why a replay keeps its planned BatchId |
+| `nondeterministicBatches` (rule 1): no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
+| `dedupIgnoresBatchId` (rule 2): any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
+| `atLeastOnce` (rule 3): add the delta without a CAS check | Crash at C3 or C3a | Over-billed. The replay keeps its own items and adds them again | Why the sink write must be conditional |
+| `atMostOnce` (rule 4): commit before the sink writes | Crash at C3a | Under-billed. The batch is skipped on restart, so the rows not yet written are lost (at C3 every row is already written, so nothing is lost) | Why committing before the sink write loses revenue |
 
-`restampReplay` is a stretch goal (`processingClock` was cut: retention uses only record fields, so the toggle was a strawman). Each guided scenario in the UI pairs one toggle with the crash point that exposes it, so the reviewer sees the failure on the first try.
+One toggle per rule. Cut: `processingClock` (retention uses only record fields, so the toggle was a strawman), `noDedupStore` (dedup by messageId predates exactly-once) and `restampReplay` (part of rule 2; fails exactly like `dedupIgnoresBatchId`). Each guided scenario in the UI pairs one toggle with the crash point that exposes it, so the reviewer sees the failure on the first try.
 
 ## Simulation and verification
 
@@ -150,7 +148,7 @@ Layout, top to bottom:
 - **Partition lanes (8 rows):** a log bar showing committed, planned and log-end offsets; the worker state (running / crashed / restarting in Ns) and its epoch; and the current batch id.
 - **Pipeline strip** for the selected partition: the 7 steps as boxes, with a ⚡ button in each gap (C1–C4, C2a, C3a). Clicking ⚡ arms a crash for the next time the worker reaches that point. The active step is highlighted, and a replay is labeled as one.
 - **Ledger panel:** rows of account × sku × half-hour, showing the engine total, the oracle total and the difference. Rows touched by late events get a "late" badge. The table can be filtered to only mismatched rows.
-- **Safeguards panel:** the 6 toggles, each with a one-line description. A toggle that's off turns its label red.
+- **Safeguards panel:** the 4 toggles, each with a one-line description. A toggle that's off turns its label red.
 - **Event inspector,** opened by clicking a messageId: all of its copies (device, offset, batch), its dedup entry, the sink row it billed, or why it was skipped or dropped.
 - **Narration log:** plain-English lines, e.g. "P3 crashed at C2 during batch (2,7). Restarted as epoch 3. Replaying (2,7) from offsets 300–399."
 

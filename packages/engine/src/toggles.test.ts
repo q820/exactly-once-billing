@@ -64,13 +64,6 @@ describe("atMostOnce: commit before the sink writes", () => {
   });
 });
 
-describe("noDedupStore: at-least-once only", () => {
-  it("no crash needed: every extra copy is billed -> over-billed", () => {
-    // m1 (same batch), m2, m4, m5 copies
-    expect(run("noDedupStore", null).net).toBe(MARKETING + UTILITY + UTILITY + MARKETING);
-  });
-});
-
 describe("dedupIgnoresBatchId: any existing key is a duplicate", () => {
   it("crash at C2: the replay dedupes its own earlier attempt -> under-billed", () => {
     expect(run("dedupIgnoresBatchId", "C2").net).toBe(-BATCH2);
@@ -107,21 +100,6 @@ describe("atLeastOnce: no CAS on the sink", () => {
 
   it("crash at C2 (nothing in the sink yet): still correct", () => {
     expect(run("atLeastOnce", "C2").matches).toBe(true);
-  });
-});
-
-describe("restampReplay: the replay takes the new epoch", () => {
-  it("crash at C2: first-attempt entries look older than the replay -> under-billed", () => {
-    expect(run("restampReplay", "C2").net).toBe(-BATCH2);
-  });
-
-  it("crash at C3: still correct with dedup before sink", () => {
-    expect(run("restampReplay", "C3").matches).toBe(true);
-  });
-
-  it("differs from dedupIgnoresBatchId when the sink runs first: the re-stamped id beats the CAS -> over-billed", () => {
-    expect(run("restampReplay", "C3", { stepOrder: "sinkThenDedup" }).net).toBe(BATCH2);
-    expect(run("dedupIgnoresBatchId", "C3", { stepOrder: "sinkThenDedup" }).matches).toBe(true);
   });
 });
 

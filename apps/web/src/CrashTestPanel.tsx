@@ -6,7 +6,7 @@ import { usd } from "./format.js";
 import type { RunSpec } from "./scenarios.js";
 import type { CrashTestJob } from "./crashTest.worker.js";
 
-/** Smaller than the CLI's default workload so 4,000 seed-runs finish in a browser tab. */
+/** Smaller than the CLI's default workload so the seed-runs finish in a browser tab. */
 const BROWSER_OVERRIDES: SimOverrides = { workload: { messages: 1_000 } };
 const PARAMS: CrashTestParams = { p: 0.05, overrides: BROWSER_OVERRIDES };
 const SEEDS = 500;

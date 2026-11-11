@@ -32,14 +32,12 @@ pnpm build                                # static site in apps/web/dist
 | Config | Failed seeds, p=0.05 | Over / under, p=0.05 | Failed seeds, p=0.001 | Over / under, p=0.001 |
 | --- | ---: | ---: | ---: | ---: |
 | all safeguards on | **0 / 2000** (746,507 crashes) | $0.00 / $0.00 | **0 / 2000** (12,274 crashes) | $0.00 / $0.00 |
-| `atMostOnce` | 2000 / 2000 | $0.00 / $3,036.09 | 1219 / 2000 (61%) | $0.00 / $59.12 |
-| `noDedupStore` | 2000 / 2000 | $27,536.39 / $0.00 | 2000 / 2000 (100%) | $27,536.39 / $0.00 |
-| `dedupIgnoresBatchId` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
-| `nondeterministicBatches` | 2000 / 2000 | $0.00 / $489.88 | 426 / 2000 (21%) | $0.00 / $9.36 |
-| `atLeastOnce` | 2000 / 2000 | $8,386.32 / $0.00 | 1707 / 2000 (85%) | $153.85 / $0.00 |
-| `restampReplay` | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
+| `nondeterministicBatches` (rule 1) | 2000 / 2000 | $0.00 / $489.88 | 426 / 2000 (21%) | $0.00 / $9.36 |
+| `dedupIgnoresBatchId` (rule 2) | 2000 / 2000 | $0.00 / $10,547.52 | 1883 / 2000 (94%) | $0.00 / $216.75 |
+| `atLeastOnce` (rule 3) | 2000 / 2000 | $8,386.32 / $0.00 | 1707 / 2000 (85%) | $153.85 / $0.00 |
+| `atMostOnce` (rule 4) | 2000 / 2000 | $0.00 / $3,036.09 | 1219 / 2000 (61%) | $0.00 / $59.12 |
 
-`noDedupStore` fails without any crash: it bills every multi-device copy and infra retry. `nondeterministicBatches` fails least often because it needs a crash and a replay whose re-picked range comes out shorter.
+Each toggle turns off one of the four rules. `nondeterministicBatches` fails least often because it needs a crash and a replay whose re-picked range comes out shorter.
 
 ## Layout
 
