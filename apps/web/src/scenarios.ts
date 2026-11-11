@@ -75,9 +75,9 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: "at-most-once",
-    title: "2. At-most-once: commit before processing",
+    title: "2. At-most-once: commit before the sink write",
     summary:
-      "P3 crashes at C3a, halfway through its sink writes. With commit last, the uncommitted batch replays. With atMostOnce, the batch was committed before processing, so recovery skips it.",
+      "P3 crashes at C3a, halfway through its sink writes. With commit last, the uncommitted batch replays. With atMostOnce, the batch was committed right before the sink writes, so recovery skips it.",
     steps: [
       {
         label: "Safeguards on",

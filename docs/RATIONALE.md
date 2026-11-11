@@ -48,7 +48,7 @@ Late events are normal, not a failure mode: a phone that comes online three week
 - **The oracle is its own package** with a lint rule against importing the engine, so independence is enforced rather than promised.
 - **Each toggle is one guarded line in the worker** (`if (!this.sg.casSink) …`), read from a `Safeguards` object.
 - **The `processingClock` toggle was cut, and retention is 30 days everywhere.** The retention check uses only record fields (`appendedAt − sentAt`), and lint bans clocks in the engine, so a toggle that reads the processing clock was a strawman nobody would write in this design (it also couldn't fail on a realistic workload). The 5-day dedup margin was dropped for the same reason: one 30-day number for the dedup TTL and the drop rule. The drop threshold only has to be no larger than the dedup TTL.
-- **Two toggles are named for the delivery guarantee they degrade to.** `atMostOnce` commits before processing; `atLeastOnce` drops the CAS check, so replays re-apply rows. The other four are named for the specific mistake.
+- **Two toggles are named for the delivery guarantee they degrade to.** `atMostOnce` commits after aggregation, right before the sink writes (where an at-most-once streaming job checkpoints); `atLeastOnce` drops the CAS check, so replays re-apply rows. The other four are named for the specific mistake.
 - **Guided scenarios are read-only; a Sandbox scenario is the free-play mode.** Each guided step sets its own safeguards and lights the ⚡ it crashes at, so the step buttons are the only controls. The Sandbox unlocks crash buttons, safeguards and a random-crash rate.
 - **Random crashes have their own optional seed.** A new crash seed gives new crashes on the same workload (the oracle total doesn't move), and the UI shows the seed so a rerolled run can still be replayed exactly.
 
@@ -56,9 +56,8 @@ Late events are normal, not a failure mode: a phone that comes online three week
 
 These came out of the toggle tests and the crash-test run, and are now folded back into PLAN.md:
 
-- **`atMostOnce` is exposed by C1 through C3a, not C1 through C3.** At C3 every sink row is already written, so committing early loses nothing. The at-most-once scenario crashes at C3a instead.
+- **`atMostOnce` first committed right after Plan, which is not where an at-most-once job commits.** It now commits after aggregation, right before the sink writes. Only a crash during the sink writes (C3a) exposes it: a crash at C1 or C2 still replays the batch, and at C3 every row is already written. The at-most-once scenario crashes at C3a.
 - **`restampReplay` and `dedupIgnoresBatchId` produce identical results with dedup before sink:** in both, the replay mistakes its own first-attempt entries for duplicates. They differ when the sink runs first: the re-stamped id beats the row's CAS, so `restampReplay` over-bills where `dedupIgnoresBatchId` stays correct. A test pins the difference.
-- **`atMostOnce` over-bills a few rows ($0.24 over 2,000 seeds) while under-billing $16,778.** When a skipped batch loses a message's first copy, a later copy from another device can land in the next half-hour bucket and be billed there.
 
 ## Learnings and iterations
 

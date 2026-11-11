@@ -262,7 +262,6 @@ export class Worker {
       endOffset: Math.min(logEnd, start + this.maxBatch - 1),
     };
     this.log.writePlan(plan);
-    if (!this.sg.commitLast) this.log.commit(plan.id, plan.endOffset); // break-it: commit before processing
     this.plan = plan;
     this.isReplay = false;
     this.phase = "read";
@@ -333,7 +332,9 @@ export class Worker {
 
   /** Step 6. CAS per row in sorted key order. C3a halfway, C3 after. */
   private sink(): StepResult {
-    const id = this.currentPlan().id;
+    const plan = this.currentPlan();
+    const id = plan.id;
+    if (!this.sg.commitLast) this.log.commit(id, plan.endOffset); // break-it: commit before the sink writes
     const half = Math.floor(this.deltas.length / 2);
     let applied = 0;
     let rejected = 0;

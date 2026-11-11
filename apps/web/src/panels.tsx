@@ -83,21 +83,19 @@ const STEPS: readonly StripStep[] = [
 ];
 
 /**
- * atMostOnce (commitLast off): the worker writes the commit inside the plan step, before C1.
- * The last step still runs, but its commit is a repeat with no effect; it only expires dedup entries.
+ * atMostOnce (commitLast off): the worker writes the commit at the start of the sink step,
+ * after aggregation and before the first sink write. The last step still runs, but its commit
+ * is a repeat with no effect; it only expires dedup entries.
  */
 const AT_MOST_ONCE_STEPS: readonly StripStep[] = [
-  { key: "plan", phase: "plan", label: "Plan" },
-  { key: "early-commit", phase: "plan", label: "Commit", after: "C1", broken: "atMostOnce: committed here, before any work. A crash from C1 to C3a loses the rest of the batch." },
-  ...STEPS.slice(1, -1),
+  ...STEPS.slice(0, -2),
+  { key: "early-commit", phase: "sink", label: "Commit", broken: "atMostOnce: committed here, after aggregation and before the sink writes. A crash during the sink writes (C3a) loses the rows not yet written." },
+  STEPS[STEPS.length - 2]!,
   { key: "commit", phase: "commit", label: "Expire", after: "C4" },
 ];
 
-/** How recovery differs under atMostOnce: the batch already looks done, so it is never replayed. */
+/** How recovery differs under atMostOnce. Before the early commit, the batch still replays normally. */
 const AT_MOST_ONCE_RECOVERY: Partial<Record<CrashPoint, string>> = {
-  C1: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is ever billed.",
-  C2a: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is billed, and its dedup entries make later copies look like duplicates.",
-  C2: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is billed, and its dedup entries make later copies look like duplicates.",
   C3a: "atMostOnce: the batch is already committed, so recovery skips it. The rows not yet written are lost.",
   C3: "atMostOnce: every row was already written, so skipping the batch loses nothing.",
 };
@@ -229,7 +227,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
       <p className="hint">
         Each box is one protocol step of P{partition}'s worker; highlighted = runs next. Hover a ⚡ for what a crash there leaves behind.{" "}
         {props.editable ? `Click one to crash P${partition} the next time it gets there.` : "A lit ⚡ is the crash this step injects."}
-        {atMostOnce ? " With atMostOnce the commit moves up to right after Plan; the last step only expires dedup entries (its commit is a no-op repeat)." : ""}
+        {atMostOnce ? " With atMostOnce the commit moves up to right before the sink writes; the last step only expires dedup entries (its commit is a no-op repeat)." : ""}
       </p>
     </section>
   );

@@ -4,7 +4,7 @@
  * reads them only from this object (PLAN.md, "Break-it toggles").
  */
 export interface Safeguards {
-  /** Commit after the sink writes, not before processing. */
+  /** Commit after the sink writes, not before them. */
   readonly commitLast: boolean;
   /** Look up and record messageIds in the DedupStore. */
   readonly dedupStore: boolean;
@@ -55,10 +55,10 @@ export const TOGGLES: readonly ToggleInfo[] = [
     safeguard: "commitLast",
     rule: "Commit last",
     ruleDescription: "A batch is committed only after all its sink writes, so a crash mid-batch replays it.",
-    description: "Commits before processing: a crash mid-batch skips the rest of the batch",
-    exposedBy: "Crash at C1-C3a",
+    description: "Commits before the sink writes: a crash mid-sink skips the rows not yet written",
+    exposedBy: "Crash at C3a",
     result: "under",
-    teaches: "Why committing before processing loses revenue",
+    teaches: "Why committing before the sink write loses revenue",
   },
   {
     name: "noDedupStore",

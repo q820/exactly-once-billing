@@ -37,22 +37,25 @@ function run(
 // Batch 2 keeps m4 (utility) and m5 (marketing, late); their later copies sit in batch 3.
 const BATCH2 = UTILITY + MARKETING;
 
-describe("atMostOnce: commit before processing", () => {
-  it("crash at C2: batch 2 is skipped on restart and its copies in batch 3 look like duplicates -> under-billed", () => {
-    const r = run("atMostOnce", "C2");
-    expect(r.net).toBe(-BATCH2);
-    expect(r.drops).toEqual([7]); // the filter step ran before the crash, so the drop was recorded
+describe("atMostOnce: commit before the sink writes", () => {
+  it("crash at C3a: batch 2 is already committed, so recovery skips it and the rows not yet written are lost", () => {
+    const r = run("atMostOnce", "C3a");
+    expect(r.net).toBe(-UTILITY); // m5's row was written, m4's wasn't
+    expect(r.drops).toEqual([7]);
   });
 
-  it("crash at C1: batch 2 is skipped; the DropLog misses its past-retention event", () => {
-    expect(run("atMostOnce", "C1").drops).toEqual([]);
+  it("crash at C3a with the sink first: the dedup entries are never written either", () => {
+    const r = run("atMostOnce", "C3a", { stepOrder: "sinkThenDedup" });
+    expect(r.matches).toBe(false);
   });
 
-  it("crash at C3a: the rows not yet written are lost", () => {
-    expect(run("atMostOnce", "C3a").net).toBe(-UTILITY); // m5's row was written, m4's wasn't
-  });
+  for (const point of ["C1", "C2a", "C2"] as const) {
+    it(`crash at ${point} (before the early commit): the batch replays -> still correct`, () => {
+      expect(run("atMostOnce", point).matches).toBe(true);
+    });
+  }
 
-  it("crash at C3 (every sink row already written): still correct, despite PLAN's 'C1-C3'", () => {
+  it("crash at C3 (every sink row already written): still correct", () => {
     expect(run("atMostOnce", "C3").matches).toBe(true);
   });
 

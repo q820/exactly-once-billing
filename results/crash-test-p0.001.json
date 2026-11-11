@@ -13,7 +13,7 @@
       "violations": 0,
       "dropMismatches": 0,
       "firstFailure": null,
-      "ms": 10665.8719
+      "ms": 12555.631338000001
     },
     {
       "name": "atMostOnce",
@@ -21,25 +21,30 @@
         "atMostOnce"
       ],
       "seeds": 2000,
-      "failed": 1943,
-      "crashes": 12228,
-      "overMicros": 69500,
-      "underMicros": 356816500,
+      "failed": 1219,
+      "crashes": 12248,
+      "overMicros": 0,
+      "underMicros": 59119000,
       "violations": 0,
-      "dropMismatches": 30,
+      "dropMismatches": 0,
       "firstFailure": {
-        "seed": 1,
-        "reason": "under-billed $0.18",
-        "crashCount": 4,
+        "seed": 3,
+        "reason": "under-billed $0.11",
+        "crashCount": 9,
         "crashTrace": [
-          "1790815032950 P0 CRASH C4 (1,37) restartAt=1790815043276",
-          "1790816240150 P5 CRASH C2 (1,58) restartAt=1790816256019",
-          "1790816421300 P1 CRASH C3a (1,61) restartAt=1790816434334",
-          "1790817930500 P7 CRASH C1 (1,88) restartAt=1790817938313"
+          "1790812980900 P1 CRASH C2a (1,3) restartAt=1790812992013",
+          "1790813041350 P4 CRASH C3 (1,4) restartAt=1790813062501",
+          "1790813123101 P4 CRASH C2a (2,6) restartAt=1790813149913",
+          "1790814743513 P1 CRASH C3a (2,35) restartAt=1790814765698",
+          "1790816421300 P0 CRASH C3a (1,61) restartAt=1790816433265",
+          "1790817301448 P1 CRASH C3a (3,80) restartAt=1790817313813",
+          "1790817629050 P5 CRASH C4 (1,83) restartAt=1790817656824",
+          "1790818956800 P3 CRASH C1 (1,106) restartAt=1790818977389",
+          "1790819226174 P5 CRASH C2 (2,110) restartAt=1790819237384"
         ],
-        "mismatchedRows": 14
+        "mismatchedRows": 10
       },
-      "ms": 10061.312269999999
+      "ms": 13122.961223999999
     },
     {
       "name": "noDedupStore",
@@ -65,7 +70,7 @@
         ],
         "mismatchedRows": 282
       },
-      "ms": 7645.426834000002
+      "ms": 8725.332092
     },
     {
       "name": "dedupIgnoresBatchId",
@@ -91,7 +96,7 @@
         ],
         "mismatchedRows": 9
       },
-      "ms": 10081.462534999995
+      "ms": 11124.720307000003
     },
     {
       "name": "nondeterministicBatches",
@@ -122,7 +127,7 @@
         ],
         "mismatchedRows": 1
       },
-      "ms": 10928.531232000001
+      "ms": 11333.291329
     },
     {
       "name": "atLeastOnce",
@@ -148,7 +153,7 @@
         ],
         "mismatchedRows": 5
       },
-      "ms": 10895.714002999994
+      "ms": 11167.242360999997
     },
     {
       "name": "restampReplay",
@@ -174,7 +179,7 @@
         ],
         "mismatchedRows": 9
       },
-      "ms": 11563.247352000006
+      "ms": 10860.072362000006
     }
   ]
 }

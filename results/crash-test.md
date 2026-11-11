@@ -5,7 +5,7 @@
 | Config | Seeds | Failed seeds | Over-billed | Under-billed | Invariant violations | Crashes injected | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | all safeguards on | 2000 | 0 (0%) | $0.00 | $0.00 | 0 | 746,507 | pass |
-| `atMostOnce` | 2000 | 2000 (100%) | $0.24 | $16,778.17 | 0 | 613,411 | pass |
+| `atMostOnce` | 2000 | 2000 (100%) | $0.00 | $3,036.09 | 0 | 689,724 | pass |
 | `noDedupStore` | 2000 | 2000 (100%) | $27,536.39 | $0.00 | 0 | 764,192 | pass |
 | `dedupIgnoresBatchId` | 2000 | 2000 (100%) | $0.00 | $10,547.52 | 0 | 711,446 | pass |
 | `nondeterministicBatches` | 2000 | 2000 (100%) | $0.00 | $489.88 | 0 | 636,117 | pass |
@@ -18,22 +18,22 @@ Verdict: "all safeguards on" passes with 0 failed seeds; each break-it toggle pa
 
 ### `atMostOnce`: seed 1
 
-under-billed $9.03; DropLog != oracle drops; 268 ledger rows differ; 296 crashes in the run.
+under-billed $1.10; 83 ledger rows differ; 340 crashes in the run.
 
 ```
 1790812860200 P2 CRASH C2 (1,1) restartAt=1790812870526
-1790812980900 P6 CRASH C2 (1,3) restartAt=1790812996769
-1790812981000 P3 CRASH C3 (1,3) restartAt=1790812994034
-1790813041100 P1 CRASH C1 (1,4) restartAt=1790813048913
-1790813041100 P4 CRASH C1 (1,4) restartAt=1790813054407
-1790813041350 P7 CRASH C3a (1,4) restartAt=1790813060931
-1790813051326 P2 CRASH C1 (2,4) restartAt=1790813061256
-1790813054634 P3 CRASH C2 (2,5) restartAt=1790813062492
-1790813117569 P6 CRASH C1 (2,6) restartAt=1790813138802
-1790813161950 P5 CRASH C2a (1,6) restartAt=1790813191244
-1790813169963 P1 CRASH C3 (2,7) restartAt=1790813197789
-1790813191494 P5 CRASH C2a (2,7) restartAt=1790813199295
-... 284 more
+1790812980900 P4 CRASH C2a (1,3) restartAt=1790812996769
+1790812981000 P0 CRASH C3 (1,3) restartAt=1790812994034
+1790812997069 P4 CRASH C3 (1,3) replay restartAt=1790813004882
+1790813004982 P4 CRASH C1 (3,4) restartAt=1790813018289
+1790813041100 P3 CRASH C1 (1,4) restartAt=1790813060681
+1790813041250 P6 CRASH C2 (1,4) restartAt=1790813051180
+1790813041350 P1 CRASH C3 (1,4) restartAt=1790813049208
+1790813079189 P4 CRASH C2a (4,6) restartAt=1790813100422
+1790813109958 P1 CRASH C4 (2,6) restartAt=1790813139252
+1790813112180 P6 CRASH C3 (2,6) restartAt=1790813140006
+1790813139602 P1 CRASH C3 (3,7) restartAt=1790813147403
+... 328 more
 ```
 
 ### `noDedupStore`: seed 1

@@ -97,7 +97,7 @@ Each toggle removes exactly one safeguard. The demo and the crash test both prov
 
 | Toggle (safeguard off) | Exposed by | Result | What it teaches |
 | --- | --- | --- | --- |
-| `atMostOnce`: commit before processing | Crash at C1–C3a | Under-billed. The batch is skipped on restart (at C3 every sink row is already written, so nothing is lost) | Why committing before processing loses revenue |
+| `atMostOnce`: commit before the sink writes | Crash at C3a | Under-billed. The batch is skipped on restart, so the rows not yet written are lost (at C3 every row is already written, so nothing is lost) | Why committing before the sink write loses revenue |
 | `noDedupStore`: no dedup, every copy is billed | No crash needed. Any multi-device duplicate | Over-billed | Replay idempotency (CAS) doesn't cover duplicates in the source data |
 | `dedupIgnoresBatchId`: any existing key counts as a duplicate | Crash at C2 or C3a | Under-billed. The replay dedupes its own earlier attempt | Why a dedup entry carries a BatchId |
 | `nondeterministicBatches`: no plan; on recovery, read whatever is available up to a random size | Crash at C2 | Under-billed. The replay reads fewer records, and the next batch falsely dedupes the rest | Why the plan is written before reading |
