@@ -102,5 +102,3 @@ Building the prototype added a few smaller corrections, listed under "Findings t
 | Publish: GitHub repo, CI, Pages | Nov 7 | 10 min | 5 min | 15 min |
 | Docs and wrap-up: time accounting, transcripts, learnings, video script, dropping a redundant scenario | Nov 7 and 11 | 41 min | 13 min | 54 min |
 | **Total** | Nov 4–11 | **~1 h 55 min** | **~1 h 30 min** | **~3 h 25 min** |
-
-Elapsed time was much longer (Nov 4–11) because of breaks and because the build waited on me twice: once for plan approval, once for the Chrome extension setup.
