@@ -74,8 +74,76 @@ export const SCENARIOS: readonly Scenario[] = [
     spotlight: "late",
   },
   {
+    id: "shrink",
+    title: "2. The shrinking replay",
+    summary:
+      "P3 crashes at C2. With the plan, the replay reads exactly its planned range. With nondeterministicBatches, it reads whatever is available up to a random size instead.",
+    steps: [
+      {
+        label: "Safeguards on",
+        narration: "The replay reads exactly the range in its plan, so it sees every record its first attempt saw and keeps them all. Green.",
+        spec: spec({ crashes: crashAt("C2") }),
+        expect: "green",
+        focusPartition: 3,
+      },
+      {
+        label: "Flip nondeterministicBatches",
+        narration:
+          "The replay commits a shorter range. The records it skipped already have dedup entries from the first attempt, so the next batch falsely dedupes them. Open a lost message in the inspector.",
+        spec: spec({ toggles: ["nondeterministicBatches"], crashes: crashAt("C2") }),
+        expect: "under",
+        focusPartition: 3,
+      },
+    ],
+    spotlight: "lost",
+  },
+  {
+    id: "c2",
+    title: "3. Crash after dedup, before sink",
+    summary:
+      "P3 crashes at C2: the dedup entries are written but nothing reached the sink. The replay must recognize its own entries by their BatchId.",
+    steps: [
+      {
+        label: "Safeguards on",
+        narration: "The replay finds entries stamped with its own BatchId and keeps those items. Green.",
+        spec: spec({ crashes: crashAt("C2") }),
+        expect: "green",
+        focusPartition: 3,
+      },
+      {
+        label: "Flip dedupIgnoresBatchId",
+        narration: "Now any existing entry means duplicate, so the replay throws away its own batch. Red, under-billed.",
+        spec: spec({ toggles: ["dedupIgnoresBatchId"], crashes: crashAt("C2") }),
+        expect: "under",
+        focusPartition: 3,
+      },
+    ],
+    spotlight: "lost",
+  },
+  {
+    id: "c3",
+    title: "4. At-least-once: crash after sink, before commit",
+    summary: "P3 crashes at C3: the sink rows are written but the batch isn't committed, so it replays.",
+    steps: [
+      {
+        label: "Safeguards on",
+        narration: "The replay sends the same deltas again; every row's CAS rejects them (lastApplied is already this BatchId). Green.",
+        spec: spec({ crashes: crashAt("C3") }),
+        expect: "green",
+        focusPartition: 3,
+      },
+      {
+        label: "Flip atLeastOnce",
+        narration: "Without the CAS check the replay adds its deltas a second time: at-least-once. Red, over-billed.",
+        spec: spec({ toggles: ["atLeastOnce"], crashes: crashAt("C3") }),
+        expect: "over",
+        focusPartition: 3,
+      },
+    ],
+  },
+  {
     id: "at-most-once",
-    title: "2. At-most-once: commit before the sink write",
+    title: "5. At-most-once: commit before the sink write",
     summary:
       "P3 crashes at C3a, halfway through its sink writes. With commit last, the uncommitted batch replays. With atMostOnce, the batch was committed right before the sink writes, so recovery skips it.",
     steps: [
@@ -92,67 +160,6 @@ export const SCENARIOS: readonly Scenario[] = [
           "On restart the batch already looks committed, so it is never replayed. The rows written before the crash survive; the rest are lost for good, and later copies of those messages are treated as duplicates.",
         spec: spec({ toggles: ["atMostOnce"], crashes: crashAt("C3a") }),
         expect: "under",
-        focusPartition: 3,
-      },
-    ],
-  },
-  {
-    id: "c2",
-    title: "3. Crash after dedup, before sink",
-    summary:
-      "P3 crashes at C2: the dedup entries are written but nothing reached the sink. The replay must recognize its own entries by their BatchId.",
-    steps: [
-      {
-        label: "Safeguards on",
-        narration: "The replay finds entries stamped with its own BatchId and keeps those items. Green.",
-        spec: spec({ crashes: crashAt("C2") }),
-        expect: "green",
-        focusPartition: 3,
-      },
-      {
-        label: "Flip dedupIgnoresBatchId and replay",
-        narration: "Now any existing entry means duplicate, so the replay throws away its own batch. Red, under-billed.",
-        spec: spec({ toggles: ["dedupIgnoresBatchId"], crashes: crashAt("C2") }),
-        expect: "under",
-        focusPartition: 3,
-      },
-    ],
-    spotlight: "lost",
-  },
-  {
-    id: "shrink",
-    title: "4. The shrinking replay",
-    summary:
-      "nondeterministicBatches is on: on recovery the worker reads whatever is available up to a random size instead of its planned range. P3 crashes at C2.",
-    steps: [
-      {
-        label: "Crash at C2, replay reads fewer records",
-        narration:
-          "The replay commits a shorter range. The records it skipped already have dedup entries from the first attempt, so the next batch falsely dedupes them. Open a lost message in the inspector.",
-        spec: spec({ toggles: ["nondeterministicBatches"], crashes: crashAt("C2") }),
-        expect: "under",
-        focusPartition: 3,
-      },
-    ],
-    spotlight: "lost",
-  },
-  {
-    id: "c3",
-    title: "5. At-least-once: crash after sink, before commit",
-    summary: "P3 crashes at C3: the sink rows are written but the batch isn't committed, so it replays.",
-    steps: [
-      {
-        label: "Safeguards on",
-        narration: "The replay sends the same deltas again; every row's CAS rejects them (lastApplied is already this BatchId). Green.",
-        spec: spec({ crashes: crashAt("C3") }),
-        expect: "green",
-        focusPartition: 3,
-      },
-      {
-        label: "Flip atLeastOnce and replay",
-        narration: "Without the CAS check the replay adds its deltas a second time: at-least-once. Red, over-billed.",
-        spec: spec({ toggles: ["atLeastOnce"], crashes: crashAt("C3") }),
-        expect: "over",
         focusPartition: 3,
       },
     ],

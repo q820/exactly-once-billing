@@ -155,10 +155,12 @@ Layout, top to bottom:
 Guided scenarios (each pins a seed, armed crashes and toggles):
 
 1. **Normal day:** duplicates and late events, no crashes. All green, and late events land in old buckets. The inspector offers a late message and a past-retention one (dropped, never billed). (A separate "phone that came back" scenario was cut: with no toggle to flip it repeated this one.)
-2. **At-most-once:** crash at C3a (halfway through the sink writes). Green with safeguards on. Flip atMostOnce. Red, under-billed.
-3. **Crash after dedup, before sink:** safeguards on, crash at C2. Green. Then flip dedupIgnoresBatchId and replay. Red, under-billed.
-4. **The shrinking replay:** nondeterministicBatches, crash at C2. Red. The inspector shows the next batch falsely deduping.
-5. **At-least-once, crash after sink, before commit:** crash at C3. Green because the CAS rejects the second write. Flip atLeastOnce. Red, over-billed.
+Scenarios 2 to 5 follow the four rules in order, one toggle each, and each shows the crash green with safeguards on before flipping the toggle.
+
+2. **The shrinking replay (rule 1):** crash at C2. Green. Flip nondeterministicBatches. Red, under-billed. The inspector shows the next batch falsely deduping.
+3. **Crash after dedup, before sink (rule 2):** crash at C2. Green. Flip dedupIgnoresBatchId. Red, under-billed.
+4. **At-least-once, crash after sink, before commit (rule 3):** crash at C3. Green because the CAS rejects the second write. Flip atLeastOnce. Red, over-billed.
+5. **At-most-once (rule 4):** crash at C3a (halfway through the sink writes). Green. Flip atMostOnce. Red, under-billed.
 6. **Sandbox:** free play on the same seed; the only scenario where safeguards and crash points are editable (guided scenarios show theirs read-only).
 7. **Crash test:** runs 500 seeds in a Web Worker with a progress bar, then shows the toggle × failures table.
 
