@@ -87,7 +87,7 @@ Building the prototype added a few smaller corrections, listed under "Findings t
 
 ## Time spent
 
-**About 2 h 40 min of hands-on time.** Measured from the two transcripts, counting work, not elapsed time:
+**About 3 h 25 min of hands-on time.** Measured from the two transcripts, counting work, not elapsed time:
 
 - **My time:** the gap before each of my prompts, capped at 3 minutes (5 for the one long design message). Anything longer was a break.
 - **Claude's time:** only consecutive steps under 5 minutes apart (writing code, running tests, the 2,000-seed runs). Waiting on me or on a stalled background job doesn't count.
@@ -98,8 +98,9 @@ Building the prototype added a few smaller corrections, listed under "Findings t
 | Setup and M0: Node 24 install workaround, pnpm workspace, lint rules, CI | Nov 4 | 10 min | 7 min | 17 min |
 | M1: engine types, stores, worker protocol, crash points, tests (plan reviewed first) | Nov 4 | 3 min | 5 min | 8 min |
 | M2–M5 in one autonomous run: scheduler, workload, oracle, invariants, toggles, crash-test CLI, 2,000-seed run, web UI, docs | Nov 5 | 6 min | 26 min | 32 min |
-| Review and iteration: crash-test rename, cut processingClock, 30-day retention, atMostOnce/atLeastOnce, p = 0.001 run, UI fixes, Sandbox, crash seed, spec re-validation | Nov 7 | 29 min | 22 min | 50 min |
-| Publish and docs: GitHub repo, CI, Pages, time accounting | Nov 7 | 16 min | 6 min | 22 min |
-| **Total** | Nov 4–7 | **~1 h 20 min** | **~1 h 20 min** | **~2 h 40 min** |
+| Review and iteration: crash-test rename, cut processingClock, 30-day retention, atMostOnce/atLeastOnce, p = 0.001 run, UI fixes, Sandbox, crash seed, spec re-validation | Nov 7 | 29 min | 21 min | 50 min |
+| Publish: GitHub repo, CI, Pages | Nov 7 | 10 min | 5 min | 15 min |
+| Docs and wrap-up: time accounting, transcripts, learnings, video script, dropping a redundant scenario | Nov 7 and 11 | 41 min | 13 min | 54 min |
+| **Total** | Nov 4–11 | **~1 h 55 min** | **~1 h 30 min** | **~3 h 25 min** |
 
-Elapsed time was much longer (Nov 4–7) because of breaks and because the build waited on me twice: once for plan approval, once for the Chrome extension setup.
+Elapsed time was much longer (Nov 4–11) because of breaks and because the build waited on me twice: once for plan approval, once for the Chrome extension setup.

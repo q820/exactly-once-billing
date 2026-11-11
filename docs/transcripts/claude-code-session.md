@@ -1,11 +1,11 @@
 # Claude Code session transcript
 
-Build session in Claude Code (Claude Opus 5.5), Nov 4–7, 2026, America/Los_Angeles. Converted from the raw session log:
+Build session in Claude Code (Claude Opus 5.5), Nov 4–11, 2026, America/Los_Angeles. Converted from the raw session log:
 
 - **Kept verbatim:** my prompts and Claude's replies.
 - **Summarized:** each tool call is one line (shell command descriptions, files read or edited, browser actions). Tool output is omitted, except answers to questions and plan approvals.
 - **Dropped:** Claude's hidden reasoning and system reminders.
-- **Redactions:** home-directory paths are shortened, and the recruiter's name is replaced with "the recruiter".
+- **Paths:** home-directory paths are shortened.
 - **Context resets:** where the conversation ran out of context, a marker shows where the session continued from a summary.
 
 ## You · Wed Nov 04, 09:57
@@ -1673,3 +1673,496 @@ Now the transcripts. First I'll check what the session log contains.
 > 🔧 Bash: cd ~/.claude/projects/-Users-maricel-mihalcea-workspace-ant-takehome-2026 && p
 > 🔧 Bash: mkdir -p docs/transcripts && cat > /private/tmp/
 > 🔧 Bash: S=/private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takehome-2026/41996019-dc1c-4211-8ef
+> 🔧 Bash: S=/private/tmp/claude-501/-Users-maricel-mihalcea-workspace-ant-takehome-2026/41996019-dc1c-4211-8ef
+> 🔧 Bash: perl -pi -e "s/the recruiter's/the recruiter's/g; s/the recruiter/the recruiter/g" docs/transcripts/planning-c
+
+### Claude · Sat Nov 07, 13:30
+
+Status: both transcripts are converted and the recruiter's name is redacted. Now I'm adding the README links and pushing.
+
+> 🔧 Bash: sed -i '' 's/and her name is replaced with "the recruiter" throughout/and the recruiter'"'"'s name i
+
+### Claude · Sat Nov 07, 13:30
+
+Both transcripts are in the repo, linked from the README, and pushed (`c762e86`). Each push to `main` redeploys the site.
+
+**On hosting:** yes, it needs to be hosted. The assignment asks for "a link to your working prototype (hosted anywhere)", and reviewers have to be able to use it without supplying anything. Local-run instructions in the README alone wouldn't satisfy that. It's already done, though: GitHub Pages hosts it for free at https://q820.github.io/exactly-once-billing/, and the README also covers running it locally.
+
+**What's in `docs/transcripts/`:**
+- **`planning-chat.md`** is your claude.ai planning transcript. The recruiter's two emails are cut down to a one-line summary, which also removes the promo code. Everything else is unchanged.
+- **`claude-code-session.md`** is this build session, converted from the 11 MB raw log into about 1,700 lines of Markdown:
+  - Your prompts and my replies are kept verbatim, including the 5 messages you sent while I was mid-task.
+  - Each tool call is reduced to a one-line summary. Tool output is left out, except your answers to questions and the plan approval.
+  - My hidden reasoning and the system reminders are dropped.
+  - A marker shows where the session ran out of context and continued from a summary.
+
+**Redactions:**
+- **Paths:** home-directory paths are shortened to `~`.
+- **The recruiter's name** is replaced with "the recruiter" in both transcripts and in PLAN.md's checklist.
+- Each transcript says at the top what was edited.
+- I scanned both for tokens and email addresses and found none.
+
+This session's transcript only goes up to the point where I generated it. Messages after that, including this one, aren't in it. I'll regenerate it as a last step before you submit.
+
+**Next:**
+1. **Video script:** a timed, click-by-click script for the roughly 5-minute video. Want it?
+2. **Reply to the recruiter** with a submission date. I can draft it, but you send it.
+3. **Submit through Greenhouse:** the live URL, the repo, the video, RATIONALE and the transcripts. The last three are all linked from the README.
+
+## You · Sat Nov 07, 13:39
+
+what are we doing about the hosting?
+
+> 🔧 Bash: curl -s -o /dev/null -w "%{http_code} " https://q820.github.io/exactly-once-billing/; cd ~
+
+### Claude · Sat Nov 07, 13:39
+
+Hosting needs nothing more from you. It's done and live at **https://q820.github.io/exactly-once-billing/**.
+
+- **Where:** GitHub Pages, on your public repo. It's free and has no expiry or server to keep running.
+- **Deploys:** every push to `main` builds and publishes the site, and GitHub keeps it up. The latest deploy, from the transcripts commit, succeeded, and the URL returns 200 right now.
+- **Already tested:** I opened the live site in Chrome. A scenario ran to completion, and the crash test ran in the browser's background workers. It's a static site with no backend, login or API keys, so reviewers just open the link.
+- **What you submit:** that URL is the "working prototype" link. The README carries it too, along with how to run it locally.
+
+The only optional extra would be a custom domain or a mirror on Vercel or Cloudflare Pages. Neither is needed for the submission.
+
+## You · Sat Nov 07, 13:40
+
+forget the submission date reply. after we make the video, do we have eveyrthing for 3?
+
+> 🔧 Bash: grep -n "^## " docs/RATIONALE.md; ls ~/Downloads | grep -i -E "assign|take.?home|\.pdf" | head
+
+### Claude · Sat Nov 07, 13:40
+
+Almost. After the video there are two small gaps, plus two last-minute steps.
+
+| The assignment asks for | Status |
+| --- | --- |
+| Link to a working prototype | ✅ https://q820.github.io/exactly-once-billing/ |
+| GitHub repo | ✅ https://github.com/q820/exactly-once-billing |
+| ~5-minute video | ⏳ To record |
+| Short written doc: approach, what makes it novel, key decisions and tradeoffs, **learnings, and iterations** | ⚠️ `docs/RATIONALE.md` covers the approach, novelty, decisions, tradeoffs and time spent, but has no section titled *learnings* or *iterations* |
+| AI transcripts | ✅ Both are in `docs/transcripts/`; the Claude Code one needs a final refresh |
+
+**Gaps to close:**
+1. **A "Learnings and iterations" section in RATIONALE.** The email names both explicitly. The material exists but is spread across "Decisions made while building" and "Findings that correct the plan". It needs gathering into one section in your voice. Candidates from this project:
+   - **The crash test corrected the plan.** It showed `atMostOnce` breaks at C1–C3a, not C1–C3. It also showed `restampReplay` and `dedupIgnoresBatchId` behave identically unless the sink runs first.
+   - **A toggle that couldn't fail was itself a finding.** `processingClock` couldn't fail on a realistic workload, so it was a strawman and got cut. That also led to simplifying retention to a single 30-day number.
+   - **Wrong tests, not wrong code.** Several early test expectations were wrong while the code was right. The hand-written fixture with literal expected totals is what exposed them.
+   - **The UI went through rounds of iteration.** It moved to delivery-guarantee naming (at-most-once and at-least-once), read-only guided scenarios plus a Sandbox, and a fix for buttons being destroyed and rebuilt every frame.
+   - **The time accounting was refined.** It went from elapsed time to hands-on time.
+2. **Link the video from the README** once it's uploaded (Loom, or unlisted YouTube), so reviewers find everything from one page. Greenhouse may also take it as an upload.
+
+**Last-minute steps:**
+- **Regenerate the Claude Code transcript** right before you submit, so it includes everything up to then.
+- **Clean up PLAN.md's submission checklist.** I'd remove the recruiter-reply line since you're skipping it, and tick the boxes that are done.
+
+Want me to draft the learnings section now (you'll want to edit it to sound like you) and clean up the checklist? Then the only things left are recording the video and dropping its link in.
+
+## You · Sat Nov 07, 13:44
+
+clean up plan. the transcripts are enough as is. as for learnings and iterations well a lot of those are already incorporated in the design choice/plan message: since i already developed this in production at meta. the gotchas: deterministic reads, the iteration was using the versioned state store for deduping first, then for CAS style write.
+
+> 🔧 Bash: sed -n '/^## Submission checklist/,$p' PLAN.md
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Sat Nov 07, 13:44
+
+I cleaned up PLAN.md's checklist and added a short "Learnings and iterations" section to RATIONALE built from your points. Both are pushed (`44c5ec9`).
+
+**PLAN.md checklist:**
+- Ticked with links: the live URL, the repo, RATIONALE and the transcripts.
+- Removed the recruiter-reply line.
+- The video is the only unchecked item.
+
+**RATIONALE, new section** (between "Findings that correct the plan" and "Tradeoffs"):
+- **Where the learning came from:** you built this protocol in production at Meta, porting the at-most-once Scribe/Stylus pipeline to exactly-once. The design choices are the result of that work.
+- **The gotcha: deterministic reads.** If a replay reads fewer records, the ones it skipped already have dedup entries from the first attempt. The next batch then falsely dedupes them and they're never billed. The fix is to write the plan before reading and have a replay read exactly that range.
+- **The key iteration: the versioned state store.** `(epoch, batch_idx)` first went on dedup entries, so a replay could tell its own earlier attempt from a true duplicate. Then the same version became the compare-and-set condition on the sink. One version gives both stores idempotent replays.
+- **Pointer:** one line refers readers to "Findings that correct the plan" for the smaller corrections from this build.
+
+I wrote it in your first person. Read it once to check it sounds like you.
+
+After the video, the only steps left are adding its link to the README and submitting.
+
+## You · Sat Nov 07, 13:45
+
+ok. prep for me the script (and what i would click) (i'm imaginign i'll record myself and the webbrowser together to give an example of a flow) for this 5min video.
+
+### Claude · Sat Nov 07, 13:45
+
+To get the click instructions exact, I'll pull the scenario step labels and expected outcomes from the code:
+
+> 🔧 Bash: grep -n "title:\|label:\|expect:\|focusPartition" apps/web/src/scenarios.ts | cut -c1-120; grep -n "
+
+### Claude · Sat Nov 07, 13:45
+
+Now I'll get the exact dollar amounts each scenario step shows, so the script can quote them:
+
+> 🔧 Bash: grep -n "export function runSpec" -A12 apps/web/src/outcome.ts | head -16; cat > apps/web/src/_amoun
+
+### Claude · Sat Nov 07, 13:47
+
+Here's a script for about 5 minutes. Most of it is narration over the browser, with your camera in a corner. The dollar amounts quoted are the ones the live site shows for each step; I ran every scenario to get them.
+
+## Before you hit record
+- Open https://q820.github.io/exactly-once-billing/ in a fresh window with one tab. Zoom the browser to about 125% so the pill and ledger are readable on video.
+- Set the speed picker to **25 events/frame**. Play then moves fast enough that a crash shows up within a few seconds.
+- Each step can be finished instantly with **Run to end**. Use **Play** only where you want viewers to see the crash and restart happen.
+- Optional: run the crash test (scenario 8) once before recording so you know what the table looks like. It takes about 6 to 9 seconds.
+
+---
+
+## 0:00–0:30 · The story (face on camera)
+> "I work on pricing for Meta's business messaging: we price a message when it's sent and bill it when it's delivered. The streaming pipeline doing that was at-most-once, so a crash could silently lose revenue. I ported it to exactly-once. This prototype distills that protocol into a small engine you can crash between any two steps, in the browser, while an independent oracle checks every cent."
+
+## 0:30–1:00 · The idea and a quick tour (scenario 1)
+**Click:** the scenario dropdown → **1. Normal day** → **Run to end**. The pill turns green.
+> "Exactly-once doesn't come from the framework. It's at-least-once plus idempotency, built from four rules: fix the batch's offset range before reading; tag dedup entries with the batch id, so a replay can tell its own earlier attempt from a real duplicate; make sink writes compare-and-set on that batch id; and commit last."
+
+**Point at each panel as you name it:**
+- **Partitions:** the 8 partitions.
+- **Crash points:** the pipeline steps. Hover a ⚡ to show its tooltip.
+- **Ledger vs oracle:** the engine on one side, the independent oracle on the other. Point at a **late** badge: "a phone that came back weeks later is billed into its old half-hour bucket."
+- **Safeguards:** the six rules.
+
+## 1:00–1:50 · Scenario 2: at-most-once loses money
+**Click:** the dropdown → **2. At-most-once** → step **1. Safeguards on**. The ⚡C3a on P3 is lit; hover it.
+> "P3 will crash halfway through its sink writes: some ledger rows written, some not."
+
+**Click:** **Play** and watch P3 go "worker down → restarting", and the narration line "Replaying (…) from offsets…". Then **Run to end**. The pill is green.
+> "The batch wasn't committed, so the worker replays it. Compare-and-set rejects the rows already written and applies the rest. No rollback needed."
+
+**Click:** step **2. Flip atMostOnce** → **Run to end**. The pill reads **Under-billed $0.06**. Point at the red "off: atMostOnce" in Safeguards.
+> "Now commit first, which is what the old pipeline did. On restart the batch already looks done, so the rows it hadn't written are gone for good. One crash, six cents. The crash test later shows what that adds up to."
+
+## 1:50–2:40 · Scenario 3: why the dedup entry carries a batch id
+**Click:** **3. Crash after dedup, before sink** → **1. Safeguards on** → **Run to end**. Green.
+> "Crash after every message in the batch is marked seen, but before any is billed. On replay those dedup entries carry this batch's own id, so they're recognized as our earlier attempt, not duplicates."
+
+**Click:** **2. Flip dedupIgnoresBatchId and replay** → **Run to end**. **Under-billed $0.11.**
+> "Ignore the batch id and the replay dedupes its own work. This versioned dedup entry was the key iteration in production, and the same version is what the sink's compare-and-set checks."
+
+*(Optional, about 10 s:)* tick **only mismatched rows** in the ledger, then click a messageId to open the inspector.
+
+## 2:40–3:30 · Scenario 5: at-least-once double-bills
+**Click:** **5. At-least-once** → **1. Safeguards on** → **Run to end**. Green.
+> "Crash after every sink write but before the commit. The whole batch replays and sends the same deltas again. Every row says 'already applied this batch id' and rejects them."
+
+**Click:** **2. Flip atLeastOnce and replay** → **Run to end**. **Over-billed $0.11.**
+> "Take away compare-and-set and you're at-least-once: the replay bills every row a second time. Turning off commit-last loses money; turning off compare-and-set charges customers twice."
+
+## 3:30–4:25 · The crash test: proof at scale
+**Click:** **8. Crash test** → **Run 3500 seed-runs**. The progress bar fills in a few seconds.
+> "That's the demo. This is the proof. Every run is seeded and deterministic, so 500 seeds per configuration, with random crashes at every crash point, in Web Workers."
+
+**Point at:** **all safeguards on: 0 failed**, then each toggle row failing.
+
+**Scroll to:** the **CLI run** table below it.
+> "Offline: 2,000 seeds and over 746,000 crashes with every safeguard on. Zero billing errors. Turn any single rule off and it fails: even at a realistic crash rate, at-most-once breaks 97% of runs."
+
+**Click:** **replay seed …** on one failing row. It opens in the main view.
+> "Any failure is one click from an exact replay."
+
+## 4:25–5:00 · What's next (face on camera)
+> "Deliberately out of scope: rebalancing, where the epoch becomes a fencing token for zombie writers; a SQLite store tortured with kill -9; and late events after an invoice closes, posted as adjustments. The repo has the README, the design rationale and both AI transcripts. Thanks."
+
+---
+
+## If you're short on time
+- **Skip:** the scenario 3 inspector detour, and clicking **replay seed** in the crash test.
+- **Don't cut:** scenarios 2 and 5. Together they show both failure directions, at-most-once losing money and at-least-once double-billing.
+
+When it's uploaded (Loom, or unlisted YouTube), send me the link. I'll add it to the README and tick the last box in PLAN.md.
+
+## You · Sat Nov 07, 13:50
+
+actually under learnings: one of the reasons for this migration wwas a hidden migraiton of the KV underneath state store which crashed due to some ShardNotOwner exception. this migration was out of my team's control  and due to atMostOnce we were losing messages.
+
+> 🔧 Bash: python3 - <<'EOF'
+
+### Claude · Sat Nov 07, 13:50
+
+I added the `ShardNotOwner` story to RATIONALE as the first bullet under "Learnings and iterations", in your voice, and pushed it (`9ad1230`):
+
+> **Why we migrated: a failure outside our control.** The KV store underneath our state store went through a migration owned by another team, and our jobs started crashing with `ShardNotOwner` exceptions. With at-most-once, every one of those crashes silently dropped the messages in flight, so we lost billable deliveries. We couldn't stop infrastructure underneath us from failing; we could make a crash harmless. That's the case `atMostOnce` reproduces here.
+
+It's also worth saying in the video, since it's a concrete reason for the whole project. I'd swap it into the 0:00–0:30 opening:
+
+> "…The streaming pipeline doing that was at-most-once. Then a KV migration underneath our state store, owned by another team, started crashing our jobs with ShardNotOwner errors, and every crash silently dropped billable messages. We couldn't control the infrastructure, so I made crashes harmless: I ported the pipeline to exactly-once…"
+
+In scenario 2, when the pill turns red, you can tie it back with a line like: "this is exactly what those ShardNotOwner crashes were costing us."
+
+## You · Sat Nov 07, 13:51
+
+can we make this repo not open to the public? just by invite?
+
+> 🔧 Bash: gh api user --jq '{login, plan: .plan.name}' 2>&1; gh api repos/q820/exactly-once-billing --jq '{vis
+
+### Claude · Sat Nov 07, 13:51
+
+Yes, it can be made private and shared by invite. I haven't changed anything yet, because there are two catches.
+
+**1. The live demo would go down.** On a free GitHub account, Pages only serves public repos, so making the repo private takes https://q820.github.io/exactly-once-billing/ offline. I can't see your plan with the current token, so I'm assuming a free account. Ways to keep a demo up:
+- **Vercel, Netlify or Cloudflare Pages (free):** they build from a private repo, and the site stays public with no login.
+- **GitHub Pro (about $4/month):** keeps Pages working from the private repo, at the same URL. The site itself is still public.
+
+**2. Reviewers need GitHub accounts and an invite.** The submission asks for a "GitHub repo link". With a private repo, that link only works for people you've added as collaborators, so you'd need each reviewer's GitHub username. You probably won't know who reviews it ahead of time.
+
+**Options:**
+
+| Option | Repo | Demo | Reviewer friction |
+| --- | --- | --- | --- |
+| **A. Leave it public** | Public | Pages, unchanged | None |
+| **B. Private + Vercel** | Invite only | Public URL on vercel.app | Needs GitHub usernames for the repo; the demo works for anyone |
+| **C. Private + GitHub Pro** | Invite only | Same Pages URL | Same as B, plus the subscription |
+| **D. Private, share a zip** | Private | Pages down unless combined with B | Attach the source to Greenhouse; no repo link |
+
+**My recommendation: A, unless there's something in the repo you don't want public.** The redactions already took out the recruiter's name and your local paths, and there are no secrets. If the worry is the Meta details (Scribe/Stylus, the `ShardNotOwner` story), those can be generalised in the docs and transcripts while the repo stays public. That keeps both links working with zero friction for reviewers.
+
+If you still want private, tell me which option. For B, Vercel needs a one-time login from you, connected to GitHub, and then I can set up the project. For any private option, I'd also need the reviewers' GitHub usernames to invite them, or you can add them yourself later under Settings → Collaborators.
+
+## You · Sat Nov 07, 13:52
+
+A is fine.
+
+### Claude · Sat Nov 07, 13:52
+
+The repo stays public, so nothing changes. The live demo, the repo link and CI all keep working as they are.
+
+That leaves the video. Once it's uploaded, send me the link and I'll:
+- add it to the README;
+- tick the last box in PLAN.md's checklist;
+- regenerate the Claude Code transcript so it covers the whole session;
+- push.
+
+Then you're ready to submit.
+
+## You · Wed Nov 11, 09:18
+
+post my 5min speech again
+
+### Claude · Wed Nov 11, 09:18
+
+Here's the speech with the `ShardNotOwner` story in the opening. Short click cues are in [brackets].
+
+---
+
+**0:00–0:30 · The story** (face on camera)
+
+> "I work on pricing for Meta's business messaging: we price a message when it's sent and bill it when it's delivered. The streaming pipeline doing that was at-most-once. Then a migration of the KV store underneath our state store, owned by another team, started crashing our jobs with ShardNotOwner errors, and every crash silently dropped billable messages. We couldn't control the infrastructure, so I made crashes harmless: I ported the pipeline to exactly-once. This prototype distills that protocol into a small engine you can crash between any two steps, in the browser, while an independent oracle checks every cent."
+
+**0:30–1:00 · The idea** [1. Normal day → Run to end]
+
+> "Exactly-once doesn't come from the framework. It's at-least-once plus idempotency, built from four rules: fix the batch's offset range before reading; tag dedup entries with the batch id, so a replay can tell its own earlier attempt from a real duplicate; make sink writes compare-and-set on that batch id; and commit last."
+
+[Point at Partitions, hover a ⚡, then point at the ledger and a "late" badge]
+
+> "Eight partitions, the pipeline steps you can crash, and the engine's ledger against the oracle. A phone that comes back weeks late is billed into its old half-hour bucket, through the same path as everything else."
+
+**1:00–1:50 · At-most-once loses money** [2 → Safeguards on, hover ⚡C3a]
+
+> "P3 will crash halfway through its sink writes: some ledger rows written, some not."
+
+[Play, watch P3 restart, then Run to end: green]
+
+> "The batch wasn't committed, so the worker replays it. Compare-and-set rejects the rows already written and applies the rest. No rollback needed."
+
+[Flip atMostOnce → Run to end: Under-billed $0.06]
+
+> "Now commit first, which is what the old pipeline did. On restart the batch already looks done, so the rows it hadn't written are gone for good. This is exactly what those ShardNotOwner crashes were costing us. One crash, six cents; the crash test shows what that adds up to."
+
+**1:50–2:40 · Why the dedup entry carries a batch id** [3 → Safeguards on → Run to end: green]
+
+> "Crash after every message in the batch is marked seen, but before any is billed. On replay those dedup entries carry this batch's own id, so they're recognized as our earlier attempt, not duplicates."
+
+[Flip dedupIgnoresBatchId → Run to end: Under-billed $0.11]
+
+> "Ignore the batch id and the replay dedupes its own work. This versioned dedup entry was the key iteration in production, and the same version is what the sink's compare-and-set checks."
+
+**2:40–3:30 · At-least-once double-bills** [5 → Safeguards on → Run to end: green]
+
+> "Crash after every sink write but before the commit. The whole batch replays and sends the same deltas again. Every row says 'already applied this batch id' and rejects them."
+
+[Flip atLeastOnce → Run to end: Over-billed $0.11]
+
+> "Take away compare-and-set and you're at-least-once: the replay bills every row a second time. Turning off commit-last loses money; turning off compare-and-set charges customers twice."
+
+**3:30–4:25 · Proof at scale** [8. Crash test → Run 3500 seed-runs]
+
+> "That's the demo. This is the proof. Every run is seeded and deterministic, so 500 seeds per configuration, with random crashes at every crash point, in Web Workers."
+
+[Point at "all safeguards on: 0 failed", then scroll to the CLI table]
+
+> "Offline: 2,000 seeds and over 746,000 crashes with every safeguard on. Zero billing errors. Turn any single rule off and it fails: even at a realistic crash rate, at-most-once breaks 97% of runs."
+
+[Click "replay seed" on a failing row]
+
+> "Any failure is one click from an exact replay."
+
+**4:25–5:00 · What's next** (face on camera)
+
+> "Deliberately out of scope: rebalancing, where the epoch becomes a fencing token for zombie writers; a SQLite store tortured with kill -9; and late events after an invoice closes, posted as adjustments. The repo has the README, the design rationale and both AI transcripts. Thanks."
+
+## You · Wed Nov 11, 09:27
+
+maybe it'll help prhase initially the use-cases/requirements: we have sent/delivery events (for this engine, we limit to delivery events only, priced on the sent timestamp), events can come late (you can open up uyour phone days later), events can and will be duplicated (a delivered evetn can be to your phone and to your webrowser app, etc), what else?
+
+### Claude · Wed Nov 11, 09:27
+
+Yes, opening with the requirements helps: each rule in the demo then reads as an answer to one of them. Beyond the three you listed, these also shaped the design:
+
+1. **Never over- or under-bill.** Businesses have to trust the invoice. Losing revenue is bad, and charging a customer twice is worse.
+2. **Crashes will happen, anywhere, outside our control.** That's the `ShardNotOwner` story. Billing can tolerate *delay*, a partition lagging while it restarts, but not *error*.
+3. **Duplicates come from infrastructure too, not just devices.** A retry re-appends the same event. Both kinds share a messageId, so one dedup key covers them.
+4. **There's a promise window.** Delivery is promised within 30 days, so a duplicate inside 30 days must never double-bill. Anything older is logged and dropped, never billed. That's rare, and a surprise line on next month's invoice would confuse the business.
+5. **It aggregates to invoice granularity.** Totals go by payment account × SKU × half-hour of delivery, and a late event updates its *old* bucket.
+6. **It has to scale.** Many partitions run in parallel, keyed by messageId, so all copies of a message meet in one place and dedup stays local.
+7. **Money is exact.** Amounts are integer micros, never floats.
+
+For the video I'd say 1, 2 and 4 out loud and leave 3, 5, 6 and 7 to the README and RATIONALE. Here's a revised opening:
+
+---
+
+**0:00–0:20 · The story** (face on camera)
+
+> "I work on pricing for Meta's business messaging. We price a message when it's sent and bill it when it's delivered. Our streaming pipeline was at-most-once, and when a KV migration underneath our state store, owned by another team, started crashing our jobs with ShardNotOwner errors, every crash silently dropped billable messages. So I ported it to exactly-once."
+
+**0:20–0:50 · The requirements** (face, or the browser on scenario 1)
+
+> "Here's what the system has to handle. One: events come late. You can open your phone days later, and that delivery still bills into its original half-hour bucket. Two: events are duplicated. The same message is delivered to your phone and your web app, and infrastructure retries add more copies; we bill exactly one. We promise delivery within 30 days, so a duplicate inside that window must never double-bill, and anything older is logged and dropped. Three: workers crash anywhere, for reasons outside our control. Billing can tolerate delay, but never an error. For this demo I model delivery events only, each carrying the price fixed at send time."
+
+**0:50–1:10 · The idea** [1. Normal day → Run to end]
+
+> "Exactly-once isn't a framework feature. It's at-least-once plus idempotency, built from four rules: fix the batch's offset range before reading; tag dedup entries with the batch id; make sink writes compare-and-set on that id; and commit last. Let's break each one."
+
+---
+
+**To stay at 5 minutes**, this opening runs about 40 seconds longer, so cut elsewhere:
+- **The panel tour:** name the panels while scenario 2 runs instead of giving them their own beat.
+- **Scenario 3:** cut it to just the flip and its one-line explanation.
+
+Everything from scenario 2 onward stays as in the earlier script.
+
+## You · Wed Nov 11, 09:34
+
+rewrite the whole speech in some doc
+
+> 🔧 Skill: anthropic-skills:docs
+> 🔧 batch
+
+### Claude · Wed Nov 11, 09:35
+
+Outline is up: [Exactly-Once Billing: Video Script (5 min)](https://claude.ai/artifact/S9mP7KcxSDW2AJ5JE9LGLD). Now writing the setup checklist.
+
+> 🔧 guide
+> 🔧 guide
+> 🔧 update
+
+### Claude · Wed Nov 11, 09:35
+
+Now the opening story.
+
+> 🔧 update
+> 🔧 update
+> 🔧 update
+
+### Claude · Wed Nov 11, 09:35
+
+Next: scenario 2.
+
+> 🔧 update
+> 🔧 update
+> 🔧 update
+> 🔧 update
+> 🔧 update
+
+### Claude · Wed Nov 11, 09:35
+
+I've put the full 5-minute script in [Exactly-Once Billing: Video Script (5 min)](https://claude.ai/artifact/S9mP7KcxSDW2AJ5JE9LGLD), with your requirements opening and the ShardNotOwner story. Edit it there, or leave comments and I'll revise.
+
+## You · Wed Nov 11, 09:41
+
+scenario 6 is kinda.. useless? how would that differ from happy scenario? or what are we toggling on/off to show its interesting? talk to me
+
+> 🔧 Bash: cat > apps/web/src/_probe.ts <<'EOF'
+
+### Claude · Wed Nov 11, 09:43
+
+You're right. Scenario 6 is scenario 1 with a different title. Both runs have no crashes and no toggles, both come out green, and both already show the same inspector shortcuts for late and past-retention messages. It made sense when `processingClock` existed: you'd flip it and watch the retention decision go wrong. Once we cut that toggle, scenario 6 had nothing left to break.
+
+Late events also have no failure mode of their own. They go through exactly the same path as on-time ones, which is the point of the design, so they're a property to show rather than something to break. Scenario 1 already shows it with the "late" badges in the ledger.
+
+**What's missing instead: a scenario for duplicates.** Your new requirements opening says "events will be duplicated", and two toggles have no scenario at all:
+- **`noDedupStore`:** the more interesting one, because it teaches something no other scenario does. Replay idempotency (compare-and-set on the batch id) doesn't protect against duplicates *in the data*. The copy delivered to your web app is a new event in a new batch, so compare-and-set happily applies it. Only the dedup store catches it.
+- **`restampReplay`:** this one behaves like `dedupIgnoresBatchId` in the default order, so it doesn't need its own scenario.
+
+I ran it on the demo seed. With `noDedupStore` and **no crash at all**, the ledger comes out **over-billed by $3.95**. That's the largest error of any scenario, and it happens on a normal day.
+
+**Proposal:**
+- **Scenario 1 "Normal day"** stays as is. It already covers late buckets and past-retention drops, and the inspector suggestions are there.
+- **Scenario 6 becomes "Duplicates: why compare-and-set isn't enough".** Step 1: safeguards on, green. Open a message with 3 device copies in the inspector: one copy billed, two marked duplicate. Step 2: flip `noDedupStore`. Over-billed $3.95, with no crash.
+
+The duplicates point also slots into the video right after the requirements, about 20 seconds, though it's optional if you're tight on time.
+
+Want me to make that change? It's about 15 lines in `scenarios.ts`, plus the PLAN.md and README mentions.
+
+## You · Wed Nov 11, 09:46
+
+let's just ditch scenario 6.
+
+> 🔧 Bash: grep -rn "phone\|7\. Sandbox\|8\. Crash test\|scenario 6\|Scenario 6\|scenarios 2, 3, 5\|8 scenarios
+> 🔧 Bash: python3 - <<'EOF'
+> 🔧 Bash: export PATH=$HOME/.local/node/bin:$PATH && python3 - <<'EOF'
+> 🔧 Bash: export PATH=$HOME/.local/node/bin:$PATH && sed -i '' 's/typecheck + lint + 131 tests/typecheck + lin
+
+### Claude · Wed Nov 11, 09:46
+
+Now updating the video script doc, which still says "8. Crash test":
+
+> 🔧 update
+
+### Claude · Wed Nov 11, 09:46
+
+Scenario 6 is gone (`f1ffc37`, pushed). The live site picks it up with this push's automatic deploy.
+
+- **Scenarios:** there are now 7. Sandbox moved up to 6 and the crash test to 7.
+- **Scenario 1 (Normal day):** its summary now also mentions that a message sent more than 30 days before it arrived goes to the DropLog. Its message inspector already suggested both a late message and a past-retention one, so nothing scenario 6 showed is lost.
+- **Docs:** PLAN.md's scenario list is renumbered, with a one-line note on why "the phone that came back" was cut. The test counts in the README and RATIONALE are now 130, one fewer because the scenario's test went with it. Typecheck, lint, tests and the build all pass.
+- **Video script:** the doc now says "7. Crash test" in both places. The script never used scenario 6, so nothing else changed there. Your edits to the doc since I wrote it are untouched.
+
+## You · Wed Nov 11, 09:48
+
+is everything updated? and ocmmited?
+
+> 🔧 Bash: git status --short | wc -l; git fetch -q; git rev-parse --short HEAD origin/main; gh run list --limi
+> 🔧 Bash: git rev-parse --short HEAD; git rev-parse --short origin/main; curl -s https://q820.github.io/exactl
+> 🔧 Bash: B=$(curl -s https://q820.github.io/exactly-once-billing/ | grep -oE 'assets/[^"]+\.js' | head -1); c
+
+### Claude · Wed Nov 11, 09:49
+
+Yes, everything is committed, pushed and deployed:
+
+- **Git:** the working tree is clean, and your local `main` and GitHub are both at `f1ffc37`, the scenario 6 removal.
+- **CI and Pages:** both passed on that commit.
+- **Live site:** it's serving the new build, with "6. Sandbox" and "7. Crash test" and no trace of the removed scenario.
+- **Docs:** README, RATIONALE and PLAN.md all match. The one leftover mention of "the phone that came back" is in PLAN.md, and it's the note explaining why that scenario was cut.
+- **Video script doc:** updated to "7. Crash test". It saves as you edit, so it doesn't need committing.
+
+Two things are left for when the video is done: add its link to the README, and refresh the Claude Code transcript so it covers today's changes too. Send me the link and I'll do both in one push.
+
+## You · Wed Nov 11, 09:51
+
+linnk to rationale doc, i wanna review it
+
+### Claude · Wed Nov 11, 09:51
+
+RATIONALE is on GitHub here: https://github.com/q820/exactly-once-billing/blob/main/docs/RATIONALE.md
+
+The same file is at `docs/RATIONALE.md` in your local repo. If you'd rather review it as a Claude Doc so you can comment inline, I can copy it into one. Any changes would still need copying back into the repo.
+
+## You · Wed Nov 11, 09:52
+
+add today's transcripts as well and udpate time spent.
+
+> 🔧 Bash: python3 - <<'EOF'
