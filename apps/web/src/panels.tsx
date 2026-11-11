@@ -62,15 +62,45 @@ function Lane(props: { lane: LaneState; max: number; now: number; selected: bool
 
 /* ---------- Pipeline strip ---------- */
 
-const STEPS: { phase: Phase; label: string; mid?: CrashPoint; after?: CrashPoint }[] = [
-  { phase: "plan", label: "Plan", after: "C1" },
-  { phase: "read", label: "Read" },
-  { phase: "filter", label: "Filter" },
-  { phase: "writeDedup", label: "Dedup", mid: "C2a", after: "C2" },
-  { phase: "aggregate", label: "Aggregate" },
-  { phase: "sink", label: "Sink", mid: "C3a", after: "C3" },
-  { phase: "commit", label: "Commit", after: "C4" },
+interface StripStep {
+  readonly key: string;
+  readonly phase: Phase;
+  readonly label: string;
+  readonly mid?: CrashPoint;
+  readonly after?: CrashPoint;
+  /** Shown in red: the step a disabled safeguard moved. */
+  readonly broken?: string;
+}
+
+const STEPS: readonly StripStep[] = [
+  { key: "plan", phase: "plan", label: "Plan", after: "C1" },
+  { key: "read", phase: "read", label: "Read" },
+  { key: "filter", phase: "filter", label: "Filter" },
+  { key: "dedup", phase: "writeDedup", label: "Dedup", mid: "C2a", after: "C2" },
+  { key: "aggregate", phase: "aggregate", label: "Aggregate" },
+  { key: "sink", phase: "sink", label: "Sink", mid: "C3a", after: "C3" },
+  { key: "commit", phase: "commit", label: "Commit", after: "C4" },
 ];
+
+/**
+ * atMostOnce (commitLast off): the worker writes the commit inside the plan step, before C1.
+ * The last step still runs, but its commit is a repeat with no effect; it only expires dedup entries.
+ */
+const AT_MOST_ONCE_STEPS: readonly StripStep[] = [
+  { key: "plan", phase: "plan", label: "Plan" },
+  { key: "early-commit", phase: "plan", label: "Commit", after: "C1", broken: "atMostOnce: committed here, before any work. A crash from C1 to C3a loses the rest of the batch." },
+  ...STEPS.slice(1, -1),
+  { key: "commit", phase: "commit", label: "Expire", after: "C4" },
+];
+
+/** How recovery differs under atMostOnce: the batch already looks done, so it is never replayed. */
+const AT_MOST_ONCE_RECOVERY: Partial<Record<CrashPoint, string>> = {
+  C1: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is ever billed.",
+  C2a: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is billed, and its dedup entries make later copies look like duplicates.",
+  C2: "atMostOnce: the batch is already committed, so recovery skips it. Nothing in it is billed, and its dedup entries make later copies look like duplicates.",
+  C3a: "atMostOnce: the batch is already committed, so recovery skips it. The rows not yet written are lost.",
+  C3: "atMostOnce: every row was already written, so skipping the batch loses nothing.",
+};
 
 /** What has survived in the stores when the worker dies at each point, and what recovery does about it. */
 export const CRASH_POINT_INFO: Record<CrashPoint, { when: string; state: string; recovery: string }> = {
@@ -107,8 +137,16 @@ export const CRASH_POINT_INFO: Record<CrashPoint, { when: string; state: string;
 };
 
 /** Top-level so React keeps the same button across re-renders (keeps hover, focus and clicks while playing). */
-function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; scripted: number[]; onClick: (() => void) | null }) {
+function Bolt(props: {
+  point: CrashPoint;
+  partition: number;
+  armed: boolean;
+  scripted: number[];
+  atMostOnce: boolean;
+  onClick: (() => void) | null;
+}) {
   const info = CRASH_POINT_INFO[props.point];
+  const recovery = (props.atMostOnce && AT_MOST_ONCE_RECOVERY[props.point]) || info.recovery;
   const scripted = props.scripted.length > 0;
   const action = scripted
     ? `This step crashes P${props.partition} here during batch ${props.scripted.join(", ")}.`
@@ -132,7 +170,7 @@ function Bolt(props: { point: CrashPoint; partition: number; armed: boolean; scr
           {props.point}: {info.when}
         </strong>
         <span>{info.state}</span>
-        <span>{info.recovery}</span>
+        <span className={recovery === info.recovery ? "" : "bad-text"}>{recovery}</span>
         <span className="tip-action">{action}</span>
       </span>
     </span>
@@ -144,6 +182,8 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
   const lane = ctrl.sim.lane(partition);
   const w = lane.worker;
   const armed = new Set(ctrl.armed.filter((a) => a.partition === partition).map((a) => a.point));
+  const atMostOnce = !ctrl.spec.safeguards.commitLast;
+  const steps = atMostOnce ? AT_MOST_ONCE_STEPS : STEPS;
   const scriptedAt = (point: CrashPoint) => ctrl.spec.crashes.filter((c) => c.partition === partition && c.point === point).map((c) => c.batchIdx);
   const bolt = (point: CrashPoint) => (
     <Bolt
@@ -151,6 +191,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
       partition={partition}
       armed={armed.has(point)}
       scripted={scriptedAt(point)}
+      atMostOnce={atMostOnce}
       onClick={
         props.editable
           ? () => {
@@ -175,9 +216,9 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
       {props.children}
       <div className="strip">
         {w?.phase === "recover" ? <div className="step next">Recover</div> : null}
-        {STEPS.map((s) => (
-          <div key={s.phase} className="step-wrap">
-            <div className={`step ${w?.phase === s.phase ? "next" : ""}`}>
+        {steps.map((s) => (
+          <div key={s.key} className="step-wrap">
+            <div className={`step ${w?.phase === s.phase ? "next" : ""} ${s.broken ? "broken" : ""}`} title={s.broken}>
               {s.label}
               {s.mid ? bolt(s.mid) : null}
             </div>
@@ -188,6 +229,7 @@ export function PipelineStrip(props: { ctrl: Controller; partition: number; edit
       <p className="hint">
         Each box is one protocol step of P{partition}'s worker; highlighted = runs next. Hover a ⚡ for what a crash there leaves behind.{" "}
         {props.editable ? `Click one to crash P${partition} the next time it gets there.` : "A lit ⚡ is the crash this step injects."}
+        {atMostOnce ? " With atMostOnce the commit moves up to right after Plan; the last step only expires dedup entries (its commit is a no-op repeat)." : ""}
       </p>
     </section>
   );

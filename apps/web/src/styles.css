@@ -290,6 +290,10 @@ button.link {
   box-shadow: 0 0 0 1px var(--accent) inset;
   color: #fff;
 }
+.step.broken {
+  border-color: var(--bad);
+  color: var(--bad);
+}
 .step .bolt-wrap {
   position: absolute;
   bottom: -12px;
